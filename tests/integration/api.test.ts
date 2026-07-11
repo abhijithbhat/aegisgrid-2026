@@ -25,6 +25,29 @@ describe("typed API boundaries", () => {
     expect(JSON.stringify(body)).not.toContain("GEMINI_API_KEY");
   });
 
+  it("rejects cross-origin browser writes before parsing or provider work", async () => {
+    const routes = [
+      ["upload", upload],
+      ["analyze", analyze],
+      ["fuse", fuse],
+      ["audit", createAudit],
+    ] as const;
+
+    for (const [name, route] of routes) {
+      const response = await route(new Request(`http://localhost/api/${name}`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: "https://attacker.example",
+        },
+        body: "{}",
+      }));
+      const body = await response.json();
+      expect(response.status, name).toBe(403);
+      expect(body.error.code, name).toBe("ORIGIN_REJECTED");
+    }
+  });
+
   it("accepts a canonical file only into the mapping-approval stage", async () => {
     const form = new FormData();
     form.set("file", new File([

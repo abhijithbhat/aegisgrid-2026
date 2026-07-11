@@ -7,6 +7,7 @@ import {
   MAX_UPLOAD_BYTES,
   parseJson,
   publicError,
+  rejectCrossOriginRequest,
   requestId,
   structuredLog,
 } from "../../../src/lib/api/http";
@@ -118,6 +119,8 @@ async function responseForParsedUpload(parsed: Awaited<ReturnType<typeof parseUp
 export async function POST(request: Request): Promise<Response> {
   const id = requestId(request);
   const started = Date.now();
+  const originRejected = rejectCrossOriginRequest(request, id);
+  if (originRejected) return originRejected;
   const limited = enforceRateLimit(request, id, { limit: 12, windowMs: 60_000 });
   if (limited) return limited;
 

@@ -5,6 +5,7 @@ import {
   jsonResponse,
   parseJson,
   publicError,
+  rejectCrossOriginRequest,
   requestId,
 } from "../../../src/lib/api/http";
 import { getOperationalRepository } from "../../../src/lib/firestore/repository";
@@ -20,16 +21,9 @@ const auditInputSchema = z.object({
   aiRecommendationVersion: z.literal("aegis-ai-contract-1.0.0"),
 }).strict();
 
-function rejectCrossOrigin(request: Request, id: string): Response | null {
-  const origin = request.headers.get("origin");
-  if (!origin) return null;
-  if (origin === new URL(request.url).origin) return null;
-  return publicError(id, 403, "ORIGIN_REJECTED", "Cross-origin audit access is not allowed.");
-}
-
 export async function GET(request: Request): Promise<Response> {
   const id = requestId(request);
-  const originRejected = rejectCrossOrigin(request, id);
+  const originRejected = rejectCrossOriginRequest(request, id);
   if (originRejected) return originRejected;
   const limited = enforceRateLimit(request, id, { limit: 60, windowMs: 60_000 });
   if (limited) return limited;
@@ -48,7 +42,7 @@ export async function GET(request: Request): Promise<Response> {
 
 export async function POST(request: Request): Promise<Response> {
   const id = requestId(request);
-  const originRejected = rejectCrossOrigin(request, id);
+  const originRejected = rejectCrossOriginRequest(request, id);
   if (originRejected) return originRejected;
   const limited = enforceRateLimit(request, id, { limit: 60, windowMs: 60_000 });
   if (limited) return limited;

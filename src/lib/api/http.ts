@@ -44,6 +44,22 @@ export function publicError(
   return jsonResponse(body, status, id);
 }
 
+/**
+ * Blocks browser cross-origin writes while preserving non-browser/server calls
+ * that do not carry an Origin header. Cloudflare supplies the canonical request
+ * URL in production, so an accepted browser Origin must match it exactly.
+ */
+export function rejectCrossOriginRequest(request: Request, id: string): Response | null {
+  const origin = request.headers.get("origin");
+  if (!origin) return null;
+  try {
+    if (new URL(origin).origin === new URL(request.url).origin) return null;
+  } catch {
+    // Invalid Origin values are rejected below.
+  }
+  return publicError(id, 403, "ORIGIN_REJECTED", "Cross-origin access is not allowed.");
+}
+
 export async function parseJson<TSchema extends z.ZodType>(
   request: Request,
   schema: TSchema,

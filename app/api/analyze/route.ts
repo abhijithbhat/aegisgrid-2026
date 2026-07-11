@@ -6,6 +6,7 @@ import {
   isResponse,
   jsonResponse,
   parseJson,
+  rejectCrossOriginRequest,
   requestId,
   structuredLog,
 } from "../../../src/lib/api/http";
@@ -53,6 +54,8 @@ const analysisRequestSchema = z.object({
 export async function POST(request: Request): Promise<Response> {
   const id = requestId(request);
   const started = Date.now();
+  const originRejected = rejectCrossOriginRequest(request, id);
+  if (originRejected) return originRejected;
   const limited = enforceRateLimit(request, id, { limit: 10, windowMs: 60_000 });
   if (limited) return limited;
 

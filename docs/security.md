@@ -24,8 +24,19 @@ Uploaded content is placed inside a delimited `<untrusted_data>` block. System p
 
 ## Abuse and reliability
 
-AI calls use a short timeout, one bounded retry with jitter for transient failures, response-size limits, and structured errors. Validation failures are never retried. The public demo is intentionally synthetic and stores no biometric or identity data. Facial recognition, diagnosis, discriminatory profiling, and personal identity inference are out of scope and prohibited by the AI contract.
+AI calls use a short timeout, one bounded retry with jitter for transient failures, response-size limits, and structured errors. Validation failures are never retried. Browser-originated upload, analysis, fusion, and audit calls must be same-origin and are rejected before parsing or provider work when the Origin is foreign. The public demo is intentionally synthetic and stores no biometric or identity data. Facial recognition, diagnosis, discriminatory profiling, and personal identity inference are out of scope and prohibited by the AI contract.
+
+## Supply-chain status
+
+The 2026-07-11 security refresh upgraded Next.js, Firebase Admin, Vite, Wrangler, the Cloudflare Vite plugin, Babel transitive packages, and related build/runtime dependencies. `npm audit --omit=dev --audit-level=high` passes with no high or critical production advisories. CI repeats that gate on every push, and CodeQL runs the `security-extended` JavaScript/TypeScript suite on `main` and weekly.
+
+Eight moderate transitive advisories remain visible rather than being suppressed:
+
+- Next.js currently bundles a PostCSS version affected when stringifying attacker-controlled CSS. AegisGrid compiles only trusted repository CSS and accepts no CSS/template uploads.
+- Firebase Admin's optional storage dependency chain currently retains `uuid@9`. AegisGrid does not call the affected v3/v5/v6 APIs with a caller-supplied output buffer, and Firestore is disabled by default.
+
+npm's proposed forced resolution would downgrade core frameworks and is not a safe fix. Reassess these transitive versions when compatible upstream releases become available.
 
 ## Remaining production controls
 
-The public hackathon deployment is deliberately zero-setup and synthetic. It applies same-origin audit writes, strict schemas, server-set actor roles, and bounded in-process throttling, but it is not a production identity boundary. Before a real venue pilot, add organization SSO, role-bound authorization, managed rate limiting, regional data-retention policy, incident-data encryption review, provider DPA review, security monitoring, backup/restore drills, and an operational approval policy signed by venue leadership.
+The public hackathon deployment is deliberately zero-setup and synthetic. It applies same-origin browser APIs, strict schemas, server-set actor roles, bounded in-process throttling, CSP/HSTS/frame denial, and restricted browser permissions, but it is not a production identity boundary. The CSP currently permits framework-required inline scripts/styles; a real pilot should move to request nonces or hashes after validating the deployment runtime. Before a real venue pilot, add organization SSO, role-bound authorization, managed rate limiting, regional data-retention policy, incident-data encryption review, provider DPA review, security monitoring, backup/restore drills, and an operational approval policy signed by venue leadership.
