@@ -17,3 +17,7 @@ Detailed verification results are appended before release.
 - Added malformed-JSON repair coverage, upload boundary tests, fusion preservation tests, responsive keyboard navigation, Playwright workflows, and axe checks.
 - Added a project-specific 1200×630 social preview and request-host-derived Open Graph metadata.
 - Local release gate: typecheck, lint, 30 unit/integration tests, environment verification, production build, eval harness, and repository-size check.
+- Reworked the desktop command experience around a single decision brief, clearer next-action hierarchy, premium high-contrast surfaces, and a readable operational type scale.
+- Polished Data Lab, Simulator, Audit, stadium map, incident queue, and intelligence panels into one consistent visual system without moving deterministic decisions into AI code.
+- Added an interaction-readiness guard so pre-hydration navigation clicks cannot be lost, corrected the brand landmark ARIA contract, and removed mobile horizontal overflow as a defensive safeguard.
+- Final refinement gate: 30 unit/integration tests, 6 Playwright workflow/accessibility tests, typecheck, lint, environment verification, production build, and 1.85 MiB repository payload.

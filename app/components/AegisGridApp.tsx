@@ -262,6 +262,7 @@ function auditStatus(value: string): string {
 }
 
 export function AegisGridApp() {
+  const [interactiveReady, setInteractiveReady] = useState(false);
   const [view, setView] = useState<View>("command");
   const [clock, setClock] = useState<Date | null>(null);
   const [phase, setPhase] = useState("Live match");
@@ -280,6 +281,11 @@ export function AegisGridApp() {
   const mobileMenuRef = useRef<HTMLButtonElement>(null);
   const [simulation, setSimulation] = useState({ running: false, name: "West Gate Surge", event: "Baseline loaded" });
   const [mobileNav, setMobileNav] = useState(false);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => setInteractiveReady(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   useEffect(() => {
     const timer = window.setInterval(() => setClock(new Date()), 1000);
@@ -760,12 +766,12 @@ export function AegisGridApp() {
     <div className="aegis-app">
       <a href="#main-content" className="skip-link">Skip to main content</a>
       <aside ref={sidebarRef} className={`sidebar${mobileNav ? " is-open" : ""}`}>
-        <div className="sidebar-brand" aria-label="AegisGrid home">
+        <div className="sidebar-brand" role="img" aria-label="AegisGrid home">
           <span className="brand-mark"><Icon name="shield" size={28} /><i /><b /></span>
           <span className="brand-compact">AG</span>
         </div>
         <nav aria-label="Primary navigation">
-          {NAV.map((item, index) => <button ref={index === 0 ? firstNavRef : undefined} type="button" key={item.id} className={view === item.id ? "is-active" : ""} onClick={() => switchView(item.id)} aria-current={view === item.id ? "page" : undefined}><Icon name={item.icon} size={20} /><span>{item.label}</span>{item.id === "audit" && incidents.some((incident) => incident.status === "Awaiting approval") ? <i className="nav-alert" /> : null}</button>)}
+          {NAV.map((item, index) => <button ref={index === 0 ? firstNavRef : undefined} type="button" key={item.id} className={view === item.id ? "is-active" : ""} onClick={() => switchView(item.id)} aria-current={view === item.id ? "page" : undefined} disabled={!interactiveReady}><Icon name={item.icon} size={20} /><span>{item.label}</span>{item.id === "audit" && incidents.some((incident) => incident.status === "Awaiting approval") ? <i className="nav-alert" /> : null}</button>)}
         </nav>
         <div className="sidebar-bottom">
           <button type="button" aria-label="Announce system status" onClick={() => setToast(`${aiState === "available" ? "Hybrid" : "Degraded"} mode · ${degradedZones.length} degraded zone feeds`)}><Icon name="sensor" size={19} /><span>Status</span><i className={degradedZones.length ? "status-watch" : "status-ok"} /></button>
@@ -777,7 +783,7 @@ export function AegisGridApp() {
       <div className="app-shell">
         <header className="topbar">
           <div className="topbar-brand">
-            <button ref={mobileMenuRef} type="button" className="mobile-menu-button" onClick={() => setMobileNav((current) => !current)} aria-label="Toggle navigation" aria-expanded={mobileNav}><Icon name={mobileNav ? "x" : "menu"} /></button>
+            <button ref={mobileMenuRef} type="button" className="mobile-menu-button" onClick={() => setMobileNav((current) => !current)} aria-label="Toggle navigation" aria-expanded={mobileNav} disabled={!interactiveReady}><Icon name={mobileNav ? "x" : "menu"} /></button>
             <div><span className="wordmark">AEGIS<span>GRID</span></span><small>INCIDENT FUSION & RESPONSE COPILOT</small></div>
             <span className="edition">2026</span>
           </div>
@@ -797,9 +803,38 @@ export function AegisGridApp() {
           {view === "command" ? (
             <main className="workspace-view command-view">
               <div className="command-heading">
-                <div><div className="eyebrow">UNITY STADIUM · MATCH DAY 17 · SYNTHETIC EXERCISE</div><h1>Live Command Center</h1><p>One operational picture for the stadium safety supervisor.</p></div>
-                <div className="operational-state"><span className="state-signal"><i /><i /><i /></span><div><small>OPERATIONAL STATE</small><strong>{simulation.running ? "Scenario running" : "Heightened monitoring"}</strong><span>{simulation.running ? `${simulation.name} · ${simulation.event}` : "All deterministic systems responding"}</span></div></div>
+                <div><div className="eyebrow">UNITY STADIUM · MATCH DAY 17 · SUPERVISOR VIEW</div><h1>Live Command Center</h1><p>See what needs attention now, why it matters, and what requires your approval.</p></div>
+                <div className="operational-state"><span className="state-signal"><i /><i /><i /></span><div><small>OPERATIONAL STATE</small><strong>{simulation.running ? "Scenario running" : "Heightened monitoring"}</strong><span>{simulation.running ? `${simulation.name} · ${simulation.event}` : "Risk, routing, and evidence systems online"}</span></div></div>
               </div>
+
+              <section className="decision-brief" aria-labelledby="priority-focus-title">
+                <article className="decision-incident">
+                  <div className="decision-label-row">
+                    <span className="priority-badge"><i />Priority 01</span>
+                    <span className="decision-incident-id mono">{topIncident.id}</span>
+                    <span className={`severity-badge ${topIncident.severity}`}><i />{topIncident.severity}</span>
+                  </div>
+                  <span className="decision-kicker">Current decision focus</span>
+                  <h2 id="priority-focus-title">{topIncident.title}</h2>
+                  <p className="decision-summary">{topIncident.summary}</p>
+                  <dl className="decision-metrics">
+                    <div><dt>Risk score</dt><dd>{topIncident.risk}<span>/100</span></dd></div>
+                    <div><dt>Confidence</dt><dd>{topIncident.confidence}<span>%</span></dd></div>
+                    <div><dt>Evidence</dt><dd>{topIncident.reports}<span> reports</span></dd></div>
+                    <div><dt>Conflicts</dt><dd className={topIncident.contradictions ? "has-conflict" : ""}>{topIncident.contradictions}<span> open</span></dd></div>
+                  </dl>
+                </article>
+                <aside className="decision-action-card" aria-label="Recommended supervisor decision">
+                  <div className="decision-approval"><span><Icon name="lock" size={14} /></span><div><strong>Supervisor decision required</strong><small>Nothing is dispatched automatically</small></div></div>
+                  <span className="decision-action-label">Recommended next step</span>
+                  <h3>{topIncident.actions[0]?.text ?? "Continue monitored assessment"}</h3>
+                  <div className="decision-response-meta">
+                    <span><Icon name="team" size={15} />{topIncident.team}</span>
+                    <span><Icon name="route" size={15} />Safe-route ETA {topIncident.eta}</span>
+                  </div>
+                  <button type="button" className="decision-review-button" onClick={() => { selectIncident(topIncident); document.getElementById("incident-intelligence")?.scrollIntoView({ behavior: "smooth" }); }}><span>Review evidence &amp; plan</span><Icon name="chevron" size={16} /></button>
+                </aside>
+              </section>
 
               <section className="kpi-grid" aria-label="Live synthetic event metrics">
                 <article className="kpi-card readiness-card"><div><span className="metric-icon cyan"><Icon name="shield" size={19} /></span><small>OPERATIONAL READINESS</small></div><div className="kpi-value"><strong>{readiness}</strong><span>/100</span></div><div className="micro-progress"><i style={{ width: `${readiness}%` }} /></div><footer><span>{criticalCount} critical</span><span>{degradedZones.length} degraded feeds</span></footer></article>
@@ -810,10 +845,9 @@ export function AegisGridApp() {
                 <article className="kpi-card"><div><span className="metric-icon violet"><Icon name="users" size={19} /></span><small>VENUE OCCUPANCY</small></div><div className="kpi-value"><strong>{overallOccupancy}%</strong><span className="kpi-unit">{(estimatedAttendance / 1000).toFixed(1)}k</span></div><footer><span>+{inboundRate}/min in</span><span>−{outboundRate}/min out</span></footer></article>
               </section>
 
-              <section className="operations-ribbon" aria-label="Current operational signals">
-                <article className="flow-readout"><span className="ribbon-icon"><Icon name="users" size={17} /></span><div><small>CROWD FLOW</small><strong>+{inboundRate} <i>in</i> / −{outboundRate} <i>out</i></strong></div><span className="sparkline" aria-hidden="true">{zones.map((zone) => <i key={zone.id} style={{ height: `${Math.max(12, Math.round(Math.abs(zone.flow) / maxAbsoluteFlow * 100))}%` }} />)}</span></article>
-                <article className="recent-signal"><span className="ribbon-icon"><Icon name="radio" size={17} /></span><div><small>TOP QUEUED REPORT · {recentEvidence?.source ?? "NO SOURCE"} · {topIncident.age}</small><strong>“{recentEvidence?.fact ?? "No active source report"}”</strong></div><button type="button" className="icon-button" onClick={() => selectIncident(topIncident)} aria-label="Open top queued report"><Icon name="chevron" size={15} /></button></article>
-                <article className="top-action"><span className="ribbon-icon action"><Icon name="spark" size={17} /></span><div><small>TOP RECOMMENDED ACTION · PRIORITY QUEUE #1</small><strong>{topIncident.actions[0]?.text ?? "Continue monitored assessment"}</strong><span>Requires supervisor approval</span></div><button type="button" className="small-action-button" onClick={() => { selectIncident(topIncident); document.getElementById("incident-intelligence")?.scrollIntoView({ behavior: "smooth" }); }}>Review plan</button></article>
+              <section className="signal-strip" aria-label="Current operational signals">
+                <article className="flow-readout"><span className="ribbon-icon"><Icon name="users" size={18} /></span><div><small>CROWD FLOW RIGHT NOW</small><strong>+{inboundRate} <i>in</i> / −{outboundRate} <i>out</i> per minute</strong></div><span className="sparkline" aria-hidden="true">{zones.map((zone) => <i key={zone.id} style={{ height: `${Math.max(12, Math.round(Math.abs(zone.flow) / maxAbsoluteFlow * 100))}%` }} />)}</span></article>
+                <article className="recent-signal"><span className="ribbon-icon"><Icon name="radio" size={18} /></span><div><small>MOST URGENT EVIDENCE · {recentEvidence?.source ?? "NO SOURCE"} · {topIncident.age}</small><strong>“{recentEvidence?.fact ?? "No active source report"}”</strong></div><button type="button" className="icon-button" onClick={() => selectIncident(topIncident)} aria-label="Open most urgent evidence"><Icon name="chevron" size={16} /></button></article>
               </section>
 
               <div className="command-grid">
