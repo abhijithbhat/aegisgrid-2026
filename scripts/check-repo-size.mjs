@@ -13,8 +13,13 @@ const paths = output.split("\0").filter(Boolean);
 let total = 0;
 
 for (const path of paths) {
-  const stats = await lstat(path);
-  if (stats.isFile()) total += stats.size;
+  try {
+    const stats = await lstat(path);
+    if (stats.isFile()) total += stats.size;
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+    // A tracked deletion is part of the current payload and contributes zero bytes.
+  }
 }
 
 const sizeMiB = total / 1024 / 1024;

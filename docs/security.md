@@ -28,7 +28,7 @@ AI calls use a short timeout, one bounded retry with jitter for transient failur
 
 ## Supply-chain status
 
-The 2026-07-11 security refresh upgraded Next.js, Firebase Admin, Vite, Wrangler, the Cloudflare Vite plugin, Babel transitive packages, and related build/runtime dependencies. `npm audit --omit=dev --audit-level=high` passes with no high or critical production advisories. CI repeats that gate on every push, and CodeQL runs the `security-extended` JavaScript/TypeScript suite on `main` and weekly.
+The July 2026 security refresh upgraded Next.js and Firebase Admin, removed the experimental vinext/Cloudflare deployment bridge, and refreshed compatible transitive packages. `npm audit --omit=dev --audit-level=high` passes with no high or critical production advisories. CI repeats that gate on every push, and CodeQL runs the `security-extended` JavaScript/TypeScript suite on `main` and weekly.
 
 Eight moderate transitive advisories remain visible rather than being suppressed:
 

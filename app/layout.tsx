@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import "@fontsource-variable/sora";
+import "@fontsource/ibm-plex-sans/400.css";
+import "@fontsource/ibm-plex-sans/500.css";
+import "@fontsource/ibm-plex-sans/600.css";
+import "@fontsource/ibm-plex-mono/500.css";
 import "./globals.css";
 
 const title = "AEGISGRID 2026 | Stadium Safety Command Center";

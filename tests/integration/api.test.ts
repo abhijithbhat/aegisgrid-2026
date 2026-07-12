@@ -4,12 +4,17 @@ import { GET as listAudit, POST as createAudit } from "../../app/api/audit/route
 import { POST as upload } from "../../app/api/upload/route";
 import { POST as analyze } from "../../app/api/analyze/route";
 import { POST as fuse } from "../../app/api/fuse/route";
+import { POST as updateIncident } from "../../app/api/incidents/route";
+import { GET as liveUpdates } from "../../app/api/live/route";
 
 const originalKey = process.env.GEMINI_API_KEY;
+const originalFirestore = process.env.ENABLE_FIRESTORE;
 
 afterEach(() => {
   if (originalKey === undefined) delete process.env.GEMINI_API_KEY;
   else process.env.GEMINI_API_KEY = originalKey;
+  if (originalFirestore === undefined) delete process.env.ENABLE_FIRESTORE;
+  else process.env.ENABLE_FIRESTORE = originalFirestore;
 });
 
 describe("typed API boundaries", () => {
@@ -165,6 +170,41 @@ describe("typed API boundaries", () => {
     expect(response.status).toBe(200);
     expect(body.outcome.status).toBe("degraded");
     expect(body.outcome.deterministicCapabilities).toEqual(["risk-scoring", "routing", "telemetry"]);
+  });
+
+  it("streams validated reasoning milestones before the final degraded result", async () => {
+    delete process.env.GEMINI_API_KEY;
+    const response = await analyze(new Request("http://localhost/api/analyze", {
+      method: "POST",
+      headers: { "content-type": "application/json", accept: "text/event-stream" },
+      body: JSON.stringify({
+        incidentId: "INC-STREAM", title: "Streaming contract test", incidentType: "other", zoneId: "unconfirmed", eventPhase: "live-match",
+        deterministicRisk: { score: 12, severity: "low", explanation: "No telemetry linked." },
+        sources: [{ sourceId: "SRC-STREAM", sourceType: "staff", text: "A person may need assistance.", reliability: 0.6 }],
+        route: { primaryZoneIds: ["unconfirmed"], alternateZoneIds: [], etaMinutes: 0, avoidedZoneIds: [], rationale: "Location must be confirmed." },
+      }),
+    }));
+    const stream = await response.text();
+    expect(response.headers.get("content-type")).toContain("text/event-stream");
+    expect(stream).toContain("event: reasoning");
+    expect(stream).toContain("Evidence envelope validated");
+    expect(stream).toContain("event: result");
+    expect(stream).toContain('"status":"degraded"');
+  });
+
+  it("persists strict incident patches and keeps live sync honest in memory mode", async () => {
+    delete process.env.ENABLE_FIRESTORE;
+    const update = await updateIncident(new Request("http://localhost/api/incidents", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ id: "INC-SYNC", status: "Monitoring", team: "Medical Alpha" }),
+    }));
+    expect(update.status).toBe(200);
+    expect((await update.json()).persistence).toEqual({ mode: "memory", durable: false });
+
+    const live = await liveUpdates(new Request("http://localhost/api/live"));
+    expect(live.status).toBe(409);
+    expect((await live.json()).mode).toBe("memory");
   });
 
   it("preserves distinct source reports in degraded fusion mode", async () => {

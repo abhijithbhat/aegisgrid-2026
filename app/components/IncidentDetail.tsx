@@ -9,6 +9,7 @@ type DetailTab = "intelligence" | "response" | "routing" | "comms";
 type IncidentDetailProps = {
   incident: Incident;
   aiStatus: "checking" | "loading" | "available" | "unavailable";
+  reasoningProgress: { stage: string; detail: string }[];
   onDecision: (action: string, nextStatus: Incident["status"], note: string) => void;
   onAssignTeam: (team: string) => void;
   onModifyPlan: (actions: string[]) => void;
@@ -24,7 +25,7 @@ const DETAIL_TABS = [
   ["comms", "Communication", "language"],
 ] as const;
 
-export function IncidentDetail({ incident, aiStatus, onDecision, onAssignTeam, onModifyPlan, onDismissReport, onUpdateAnnouncement }: IncidentDetailProps) {
+export function IncidentDetail({ incident, aiStatus, reasoningProgress, onDecision, onAssignTeam, onModifyPlan, onDismissReport, onUpdateAnnouncement }: IncidentDetailProps) {
   const [tab, setTab] = useState<DetailTab>("intelligence");
   const [completed, setCompleted] = useState<number[]>([]);
   const [editing, setEditing] = useState(false);
@@ -33,8 +34,10 @@ export function IncidentDetail({ incident, aiStatus, onDecision, onAssignTeam, o
   const [announcementDraft, setAnnouncementDraft] = useState(incident.announcement.text);
   const [editingAnnouncement, setEditingAnnouncement] = useState(false);
   const [copyStatus, setCopyStatus] = useState("");
+  const [comparePaths, setComparePaths] = useState(false);
   const aiAvailable = aiStatus === "available";
   const aiPending = aiStatus === "checking" || aiStatus === "loading";
+  const hasNonLatinScenarioSample = /[^\u0000-\u024f]/.test(incident.announcement.text);
 
   const recordNote = () => {
     if (!note.trim()) return;
@@ -93,6 +96,19 @@ export function IncidentDetail({ incident, aiStatus, onDecision, onAssignTeam, o
       <div className="detail-body">
         {tab === "intelligence" ? (
           <div id="incident-panel-intelligence" aria-labelledby="incident-tab-intelligence" className="tab-content intelligence-content" role="tabpanel">
+            <div className="essentiality-control">
+              <div><strong>GenAI essentiality</strong><span>Compare the operational facts available with and without semantic reasoning.</span></div>
+              <button type="button" role="switch" aria-checked={comparePaths} onClick={() => setComparePaths((current) => !current)}><span />{comparePaths ? "Comparison on" : "Compare paths"}</button>
+            </div>
+
+            {comparePaths ? <div className="path-comparison" aria-label="Deterministic-only and full AI path comparison">
+              <article><span>DETERMINISTIC ONLY</span><h3>Measured facts and safe route</h3><p>Risk <strong>{incident.risk}/100</strong>. {incident.reports} reports remain separate records. The engine can rank urgency and calculate a route, but it cannot determine whether different wording describes the same event.</p><ul><li>Transparent weighted risk</li><li>Validated source records</li><li>Graph-calculated ETA {incident.eta}</li></ul></article>
+              <article className="ai-path"><span>FULL AI PATH</span><h3>Evidence interpreted for review</h3><p>{aiAvailable ? incident.summary : "Unavailable until a provider response passes the evidence contract."}</p><ul><li>{aiAvailable ? `${incident.contradictions} contradictions synthesized` : "No semantic synthesis"}</li><li>{aiAvailable ? `${incident.confidence}% classification confidence` : "No AI confidence claimed"}</li><li>{aiAvailable ? `${incident.questions.length} high-value questions generated` : "No generated questions"}</li></ul></article>
+            </div> : null}
+
+            {reasoningProgress.length ? <ol className="reasoning-stream" aria-label="Live AI reasoning status" aria-live="polite">
+              {reasoningProgress.map((item) => <li key={item.stage}><Icon name="check" size={13} /><span><strong>{item.stage}</strong><small>{item.detail}</small></span></li>)}
+            </ol> : null}
             <div className="score-strip">
               <div className="risk-score-block">
                 <div className="score-ring" style={{ "--score": `${incident.risk * 3.6}deg` } as React.CSSProperties}>
@@ -258,7 +274,7 @@ export function IncidentDetail({ incident, aiStatus, onDecision, onAssignTeam, o
 
         {tab === "comms" ? (
           <div id="incident-panel-comms" aria-labelledby="incident-tab-comms" className="tab-content comms-content" role="tabpanel">
-            {!aiAvailable ? <div className="degraded-analysis-card comms-degraded"><span className="degraded-icon"><Icon name="language" size={22} /></span><div><strong>{aiPending ? "Announcement analysis in progress" : "AI analysis unavailable."}</strong><p>{aiPending ? "The draft will appear only after the provider output passes contract and evidence validation." : "Context-sensitive announcement generation is paused. No canned or unverified message will be presented as current."}</p></div><span className="degraded-mode-tag">{aiPending ? "VALIDATING" : "NO DRAFT GENERATED"}</span></div> : <>
+            {!aiAvailable ? <><div className="degraded-analysis-card comms-degraded"><span className="degraded-icon"><Icon name="language" size={22} /></span><div><strong>{aiPending ? "Announcement analysis in progress" : "AI analysis unavailable."}</strong><p>{aiPending ? "The draft will appear only after the provider output passes contract and evidence validation." : "Context-sensitive announcement generation is paused. No canned or unverified message will be presented as current."}</p></div><span className="degraded-mode-tag">{aiPending ? "VALIDATING" : "NO CURRENT DRAFT"}</span></div>{hasNonLatinScenarioSample ? <article className="announcement-card scenario-language-sample" aria-label="Validated multilingual scenario rendering sample"><div><span className="announcement-language">SCENARIO FIXTURE · {incident.announcement.language.toUpperCase()}</span><span className="tone-label">RENDERING CHECK</span></div><p lang="hi">{incident.announcement.text}</p><footer><span><Icon name="shield" size={14} />Saved synthetic fixture—not a current AI recommendation</span></footer></article> : null}</> : <>
             <div className="comms-control-row">
               <div><span className="section-icon cyan"><Icon name="language" size={16} /></span><div><span>ANNOUNCEMENT DRAFT</span><small>Context-sensitive · not literal translation</small></div></div>
               <span className="announcement-language">{incident.announcement.language}</span>

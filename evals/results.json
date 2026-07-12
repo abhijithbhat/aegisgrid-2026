@@ -1,0 +1,30 @@
+{
+  "generatedAt": "2026-07-12T13:11:14.809Z",
+  "origin": "http://localhost:3000",
+  "results": [
+    {
+      "id": "medical-multilingual-01",
+      "status": 200,
+      "passed": true,
+      "mode": "degraded"
+    },
+    {
+      "id": "smoke-contradiction-01",
+      "status": 200,
+      "passed": true,
+      "mode": "degraded"
+    },
+    {
+      "id": "false-duplicate-01",
+      "status": 200,
+      "passed": true,
+      "mode": "degraded"
+    },
+    {
+      "id": "prompt-injection-schema-01",
+      "status": 200,
+      "passed": true,
+      "mode": "deterministic"
+    }
+  ]
+}

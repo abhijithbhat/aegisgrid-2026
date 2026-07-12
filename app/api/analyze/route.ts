@@ -63,7 +63,7 @@ export async function POST(request: Request): Promise<Response> {
   if (isResponse(body)) return body;
 
   const sourceTextById = Object.fromEntries(body.sources.map((source) => [source.sourceId, source.text]));
-  const outcome = await analyzeWithProvider({
+  const runAnalysis = () => analyzeWithProvider({
     provider: createGeminiProvider(),
     systemPrompt: INCIDENT_ANALYSIS_SYSTEM_PROMPT,
     dataPayload: JSON.stringify({
@@ -87,18 +87,57 @@ export async function POST(request: Request): Promise<Response> {
     maxAttempts: Number(process.env.AI_MAX_RETRIES ?? 1) > 0 ? 2 : 1,
   });
 
-  structuredLog({
-    requestId: id,
-    operation: "incident-analysis",
-    outcome: outcome.status === "available" ? "success" : "degraded",
-    durationMs: Date.now() - started,
-    code: outcome.status === "degraded" ? outcome.error.code : undefined,
+  const finish = (outcome: Awaited<ReturnType<typeof runAnalysis>>) => {
+    structuredLog({
+      requestId: id,
+      operation: "incident-analysis",
+      outcome: outcome.status === "available" ? "success" : "degraded",
+      durationMs: Date.now() - started,
+      code: outcome.status === "degraded" ? outcome.error.code : undefined,
+    });
+    return { ok: true, incidentId: body.incidentId, outcome, dispatchPerformed: false };
+  };
+
+  if (!request.headers.get("accept")?.includes("text/event-stream")) {
+    const payload = finish(await runAnalysis());
+    return jsonResponse(payload, 200, id);
+  }
+
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const send = (event: string, data: unknown) => controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+      const pause = () => new Promise((resolve) => setTimeout(resolve, 140));
+      try {
+        send("reasoning", { stage: "Evidence envelope validated", detail: `${body.sources.length} source IDs checked` });
+        await pause();
+        send("reasoning", { stage: "Deterministic boundary preserved", detail: `Risk ${body.deterministicRisk.score}/100 and route treated as read-only evidence` });
+        await pause();
+        send("reasoning", { stage: "Semantic synthesis running", detail: "Gemini is interpreting cross-source meaning; deterministic outputs remain available" });
+        const outcome = await runAnalysis();
+        const payload = finish(outcome);
+        if (outcome.status === "available") {
+          send("reasoning", { stage: "Semantic synthesis validated", detail: `${outcome.recommendation.evidence.length} citations · ${outcome.recommendation.contradictions.length} contradictions` });
+          await pause();
+          send("reasoning", { stage: "Supervisor brief ready", detail: outcome.recommendation.summary });
+        } else {
+          send("reasoning", { stage: "Degraded boundary active", detail: "No unvalidated recommendation was released" });
+        }
+        await pause();
+        send("result", payload);
+      } finally {
+        controller.close();
+      }
+    },
   });
 
-  return jsonResponse({
-    ok: true,
-    incidentId: body.incidentId,
-    outcome,
-    dispatchPerformed: false,
-  }, 200, id);
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      "content-type": "text/event-stream; charset=utf-8",
+      "cache-control": "no-cache, no-transform",
+      connection: "keep-alive",
+      "x-request-id": id,
+    },
+  });
 }

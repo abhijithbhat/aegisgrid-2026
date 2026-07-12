@@ -25,6 +25,7 @@ export interface OperationalRepository {
   upsertIncident(record: IncidentRecord): Promise<void>;
   appendAuditEvent(event: PersistedAuditEvent): Promise<void>;
   listAuditEvents(incidentId?: string): Promise<PersistedAuditEvent[]>;
+  subscribe?(listener: (update: { type: "incident"; record: IncidentRecord } | { type: "audit"; event: PersistedAuditEvent }) => void, onError: () => void): () => void;
 }
 
 const memoryIncidents = new Map<string, IncidentRecord>();
@@ -88,6 +89,19 @@ async function createFirestoreRepository(): Promise<OperationalRepository> {
       if (incidentId) query = query.where("incidentId", "==", incidentId);
       const snapshot = await query.get();
       return snapshot.docs.map((document) => document.data() as PersistedAuditEvent);
+    },
+    subscribe(listener, onError) {
+      const unsubscribeIncidents = database.collection("incidents").onSnapshot((snapshot) => {
+        for (const change of snapshot.docChanges()) {
+          if (change.type !== "removed") listener({ type: "incident", record: change.doc.data() as IncidentRecord });
+        }
+      }, onError);
+      const unsubscribeAudit = database.collection("auditEvents").orderBy("timestamp", "desc").limit(200).onSnapshot((snapshot) => {
+        for (const change of snapshot.docChanges()) {
+          if (change.type === "added") listener({ type: "audit", event: change.doc.data() as PersistedAuditEvent });
+        }
+      }, onError);
+      return () => { unsubscribeIncidents(); unsubscribeAudit(); };
     },
   };
 }

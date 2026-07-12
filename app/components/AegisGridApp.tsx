@@ -19,7 +19,7 @@ type View = "command" | "data" | "simulator" | "audit";
 type AiState = "checking" | "available" | "unavailable";
 type AuditPersistence = "checking" | "firestore" | "memory" | "error";
 type IncidentAnalysisState =
-  | { status: "loading" }
+  | { status: "loading"; progress: { stage: string; detail: string }[] }
   | { status: "available"; recommendation: AIRecommendation }
   | { status: "unavailable"; reason: string };
 
@@ -69,6 +69,7 @@ const AUDIT_ACTION_BY_LABEL: Record<string, string> = {
   "Supervisor note added": "note-added",
   "Incident resolved": "incident-resolved",
 };
+const AUDIT_LABEL_BY_ACTION = Object.fromEntries(Object.entries(AUDIT_ACTION_BY_LABEL).map(([label, action]) => [action, label]));
 
 const TEAM_BY_TYPE: Record<AIRecommendation["recommendedTeamType"], string> = {
   medical: "Medical Alpha",
@@ -288,6 +289,32 @@ export function AegisGridApp() {
   }, []);
 
   useEffect(() => {
+    if (auditPersistence !== "firestore") return;
+    const stream = new EventSource("/api/live");
+    stream.addEventListener("incident", (event) => {
+      try {
+        const update = JSON.parse((event as MessageEvent<string>).data) as { record?: { id?: unknown; payload?: unknown } };
+        const id = typeof update.record?.id === "string" ? update.record.id : "";
+        const payload = update.record?.payload;
+        if (!id || !payload || typeof payload !== "object" || Array.isArray(payload)) return;
+        setIncidents((current) => current.map((incident) => incident.id === id ? { ...incident, ...(payload as Partial<Incident>), id } : incident));
+      } catch { /* malformed provider state is ignored at the UI boundary */ }
+    });
+    stream.addEventListener("audit", (event) => {
+      try {
+        const update = JSON.parse((event as MessageEvent<string>).data) as { event?: Record<string, unknown> };
+        const item = update.event;
+        if (!item || typeof item.id !== "string" || typeof item.timestamp !== "string" || typeof item.action !== "string" || typeof item.incidentId !== "string") return;
+        const mapped: AuditEvent = { id: item.id, timestamp: new Date(item.timestamp).toLocaleTimeString("en-GB", { hour12: false }), actor: item.actorRole === "stadium-safety-supervisor" ? "Safety Supervisor" : "System", action: AUDIT_LABEL_BY_ACTION[item.action] ?? item.action, incident: item.incidentId, previous: String(item.previousStatus ?? "—"), next: String(item.newStatus ?? "—"), note: String(item.note ?? ""), version: String(item.aiRecommendationVersion ?? "") };
+        setAuditEvents((current) => current.some((existing) => existing.id === mapped.id) ? current : [mapped, ...current]);
+      } catch { /* malformed provider state is ignored at the UI boundary */ }
+    });
+    stream.addEventListener("sync-error", () => setAuditPersistence("error"));
+    stream.onerror = () => { stream.close(); };
+    return () => stream.close();
+  }, [auditPersistence]);
+
+  useEffect(() => {
     const timer = window.setInterval(() => setClock(new Date()), 1000);
     return () => window.clearInterval(timer);
   }, []);
@@ -323,11 +350,11 @@ export function AegisGridApp() {
     }));
     void Promise.resolve().then(() => {
       if (!controller.signal.aborted) {
-        setAnalysisByIncident((current) => ({ ...current, [incidentId]: { status: "loading" } }));
+        setAnalysisByIncident((current) => ({ ...current, [incidentId]: { status: "loading", progress: [] } }));
       }
       return fetch("/api/analyze", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", accept: "text/event-stream" },
       signal: controller.signal,
       body: JSON.stringify({
         incidentId: selectedIncident.id,
@@ -352,12 +379,39 @@ export function AegisGridApp() {
       });
     })
       .then(async (response) => {
-        const body = await response.json() as {
+        if (!response.ok || !response.body) throw new Error("Analysis request failed.");
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let body: {
           outcome?: { status: "available"; recommendation: AIRecommendation } | { status: "degraded"; reason?: string; error?: { message?: string } };
           error?: { message?: string };
-        };
+        } | undefined;
+        while (true) {
+          const { value, done } = await reader.read();
+          buffer += decoder.decode(value, { stream: !done });
+          const frames = buffer.split("\n\n");
+          buffer = frames.pop() ?? "";
+          for (const frame of frames) {
+            const event = frame.match(/^event: (.+)$/m)?.[1];
+            const data = frame.match(/^data: (.+)$/m)?.[1];
+            if (!event || !data) continue;
+            const parsed = JSON.parse(data) as Record<string, unknown>;
+            if (event === "reasoning") {
+              const stage = typeof parsed.stage === "string" ? parsed.stage : "Reasoning update";
+              const detail = typeof parsed.detail === "string" ? parsed.detail : "";
+              setAnalysisByIncident((current) => {
+                const active = current[incidentId];
+                return active?.status === "loading" ? { ...current, [incidentId]: { ...active, progress: [...active.progress, { stage, detail }] } } : current;
+              });
+            }
+            if (event === "result") body = parsed as typeof body;
+          }
+          if (done) break;
+        }
+        if (!body) throw new Error("Analysis stream ended before a validated result.");
         const outcome = body.outcome;
-        if (!response.ok || !outcome) throw new Error(body.error?.message ?? "Analysis request failed.");
+        if (!outcome) throw new Error(body.error?.message ?? "Analysis request failed.");
         if (outcome.status === "available") {
           setAnalysisByIncident((current) => ({ ...current, [incidentId]: { status: "available", recommendation: outcome.recommendation } }));
         } else {
@@ -506,28 +560,31 @@ export function AegisGridApp() {
     setSelectedZone(incident.zoneId);
   };
 
+  const syncIncident = useCallback((patch: { id: string; status?: Incident["status"]; team?: string; actions?: Incident["actions"]; announcement?: Incident["announcement"] }) => {
+    void fetch("/api/incidents", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(patch) }).catch(() => undefined);
+  }, []);
+
   const handleDecision = (action: string, nextStatus: Incident["status"], note: string) => {
     const previous = selectedIncident.status;
     setIncidents((current) => current.map((incident) => incident.id === selectedIncident.id ? { ...incident, status: nextStatus } : incident));
+    syncIncident({ id: selectedIncident.id, status: nextStatus });
     addAudit(action, note, selectedIncident.id, previous, nextStatus);
   };
 
   const handleAssignTeam = (team: string) => {
     const previousTeam = selectedIncident.team;
     setIncidents((current) => current.map((incident) => incident.id === selectedIncident.id ? { ...incident, team } : incident));
+    syncIncident({ id: selectedIncident.id, team });
     addAudit("Response team assigned", `Suggested team changed from ${previousTeam} to ${team}; no dispatch occurred.`, selectedIncident.id, selectedIncident.status, selectedIncident.status);
   };
 
   const handleModifyPlan = (actions: string[]) => {
+    const synchronizedActions = actions.map((text, index) => ({ text, owner: selectedIncident.actions[index]?.owner ?? "Safety supervisor", target: selectedIncident.actions[index]?.target ?? "Review", approval: true }));
     setIncidents((current) => current.map((incident) => incident.id === selectedIncident.id ? {
       ...incident,
-      actions: actions.map((text, index) => ({
-        text,
-        owner: incident.actions[index]?.owner ?? "Safety supervisor",
-        target: incident.actions[index]?.target ?? "Review",
-        approval: true,
-      })),
+      actions: synchronizedActions,
     } : incident));
+    syncIncident({ id: selectedIncident.id, actions: synchronizedActions });
     setAnalysisByIncident((current) => {
       const analysis = current[selectedIncident.id];
       if (analysis?.status !== "available") return current;
@@ -583,12 +640,14 @@ export function AegisGridApp() {
       if (analysis?.status !== "available") return current;
       return { ...current, [selectedIncident.id]: { status: "available", recommendation: { ...analysis.recommendation, announcement: { ...analysis.recommendation.announcement, text } } } };
     });
+    syncIncident({ id: selectedIncident.id, announcement: { ...selectedIncident.announcement, text } });
   };
 
   const handleResolve = (incidentId: string, note: string) => {
     const target = incidents.find((incident) => incident.id === incidentId);
     if (!target) return;
     setIncidents((current) => current.map((incident) => incident.id === incidentId ? { ...incident, status: "Resolved" } : incident));
+    syncIncident({ id: incidentId, status: "Resolved" });
     addAudit("Incident resolved", note, incidentId, target.status, "Resolved");
   };
 
@@ -703,7 +762,14 @@ export function AegisGridApp() {
         if (item.id !== incidentId) return item;
         if (scenarioId === "west-surge") return { ...item, reports: Math.max(item.reports, 1 + Math.min(step, 3)), status: step >= 3 ? "Awaiting approval" as const : "Monitoring" as const, team: "Crowd Team North", riskInputs: { ...item.riskInputs, hazardSeverity: step >= 4 ? 45 : 60 + step * 8 }, summary: event };
         if (scenarioId === "smoke-conflict") return { ...item, contradictions: Math.min(2, Math.max(0, step - 1)), reports: Math.max(1, Math.min(4, step + 1)), status: step >= 4 ? "Awaiting approval" as const : item.status, summary: event };
-        if (scenarioId === "medical-multilingual") return { ...item, reports: Math.max(1, Math.min(3, step + 1)), status: step >= 2 ? "Awaiting approval" as const : item.status, summary: event };
+        if (scenarioId === "medical-multilingual") return {
+          ...item,
+          reports: Math.max(1, Math.min(3, step + 1)),
+          status: step >= 2 ? "Awaiting approval" as const : item.status,
+          summary: step >= 1 ? "English and हिंदी reports use different landmarks for the same unconscious guest near west stair W-3." : event,
+          evidence: step >= 1 && !item.evidence.some((source) => source.source === "SIM-REPORT-HI") ? [...item.evidence, { source: "SIM-REPORT-HI", fact: "पश्चिमी भोजन क्षेत्र के पास एक व्यक्ति बेहोश है।", weight: "0.84", kind: "Hindi guest report" }] : item.evidence,
+          announcement: step >= 2 ? { language: "English · हिन्दी", tone: "Calm / directive", text: "Please keep west stair W-3 clear. कृपया पश्चिमी सीढ़ी W-3 को खाली रखें और कर्मचारियों के निर्देशों का पालन करें।" } : item.announcement,
+        };
         if (scenarioId === "accessible-block") return { ...item, status: step >= 1 ? "Awaiting approval" as const : item.status, riskInputs: { ...item.riskInputs, hazardSeverity: 45 + step * 8 }, summary: event };
         if (scenarioId === "false-duplicate") return { ...item, title: "Person fall beside south service lift", type: "Medical", reports: 1, contradictions: 0, riskInputs: { hazardSeverity: 60, vulnerablePerson: true }, summary: "One person fall remains a distinct incident from the nearby equipment event.", evidence: [{ source: "REPORT-A-FALL", fact: "A person fell beside the south service lift.", weight: "0.82", kind: "Staff report" }] };
         return item;
@@ -856,7 +922,7 @@ export function AegisGridApp() {
               </div>
 
               <div id="incident-intelligence">
-                <IncidentDetail key={selectedIncident.id} incident={displayedIncident} aiStatus={detailAiStatus} onDecision={handleDecision} onAssignTeam={handleAssignTeam} onModifyPlan={handleModifyPlan} onDismissReport={handleDismissReport} onUpdateAnnouncement={handleUpdateAnnouncement} />
+                <IncidentDetail key={selectedIncident.id} incident={displayedIncident} aiStatus={detailAiStatus} reasoningProgress={selectedAnalysis?.status === "loading" ? selectedAnalysis.progress : []} onDecision={handleDecision} onAssignTeam={handleAssignTeam} onModifyPlan={handleModifyPlan} onDismissReport={handleDismissReport} onUpdateAnnouncement={handleUpdateAnnouncement} />
               </div>
             </main>
           ) : null}

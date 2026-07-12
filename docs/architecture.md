@@ -27,13 +27,26 @@ Deterministic code owns arithmetic, validation, route calculation, heap ordering
 - `src/lib/routing` calculates primary, alternate, and naive routes over an adjacency list.
 - `app/api/analyze`, `app/api/fuse`, and `app/api/upload` invoke `@google/genai` only on the server; `src/lib/ai` validates output, attempts one constrained repair, and returns an explicit degraded result when unavailable.
 - `src/lib/data`, `src/lib/telemetry`, and `src/lib/validation` treat uploads and free text as untrusted data.
-- `src/lib/firestore` persists incidents and append-only audit events when Firestore is enabled; in-browser scenario state remains intentionally non-durable in the public no-credential demo.
+- `src/lib/firestore` persists incidents and append-only audit events when Firestore is enabled. Its server-side Firestore `onSnapshot` listeners feed an SSE channel so open supervisor sessions receive incident and audit changes immediately; memory mode remains explicitly session-local.
+- `app/api/analyze` returns validated reasoning milestones and the final strict recommendation over SSE. It never streams private chain-of-thought or exposes unvalidated provider text.
 
 ## Provider choices verified July 2026
 
-The app uses Google's GA [`@google/genai`](https://ai.google.dev/gemini-api/docs/libraries) package and configures the stable, cost-efficient [`gemini-2.5-flash-lite`](https://ai.google.dev/gemini-api/docs/models/gemini-2.5-flash-lite) through `GEMINI_MODEL`. Structured output uses `responseMimeType: application/json` plus `responseJsonSchema`, then Zod validation. Per-request `httpOptions.timeout` and bounded retry settings are explicit.
+The app uses Google's GA [`@google/genai`](https://ai.google.dev/gemini-api/docs/libraries) package and configures the stable, generally available [`gemini-3.5-flash`](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash) through `GEMINI_MODEL`. This model ID was rechecked against Google's model page and release notes on 2026-07-12. Structured output uses `responseMimeType: application/json` plus `responseJsonSchema`, then Zod validation. Per-request `httpOptions.timeout` and bounded retry settings are explicit.
 
 Firestore uses Firebase Admin with Application Default Credentials on Google Cloud, as recommended by the [server setup guide](https://firebase.google.com/docs/admin/setup). Cloud Run deployment stores `GEMINI_API_KEY` in Secret Manager and injects it server-side.
+
+## Runtime and deployment decision
+
+AegisGrid now builds and runs as direct Next.js (`next dev`, `next build --webpack`, and the standalone `server.js` image). The experimental `vinext` 0.0.50 bridge, Wrangler worker entry, parallel Vite configuration, and Sites hosting manifest were removed after the Cloud Run target made them redundant. Webpack is explicit for production builds because it completes deterministic standalone builds in the sandbox and Cloud Build, while the current Turbopack build left a stale lock during verification. This reduces the deployment surface to one framework configuration and one container runtime.
+
+The Cloud Run deployment command and source build were exercised on 2026-07-12. Google Cloud blocked service creation because none of the seven accessible projects has billing enabled, so no `run.app` URL is claimed in this repository. Once billing is attached, rerun the documented command and replace the README's pending status with the returned service URL.
+
+## Operator visual system
+
+The dark base is functional: a stadium supervisor may monitor this common operating picture for hours in a low-light control room, so the palette limits luminance shifts and eye strain. Color is semantic—cyan means live/selected, vermilion critical, lime verified/available, and amber pending/degraded. Sora is reserved for headings, IBM Plex Sans carries dense operational copy, and IBM Plex Mono aligns IDs, times, scores, and ETAs. The tactical stadium map is the sole high-expression signature element; the surrounding decision, evidence, and audit surfaces stay quiet to reduce the swivel-chair problem rather than recreating it inside one screen.
+
+Layout follows an 8px grid, a three-tier type hierarchy, and 1px surface borders. Motion is limited to critical-incident arrival, route scanning, and progressive validated reasoning; all are disabled under `prefers-reduced-motion`.
 
 ## Risk formula
 

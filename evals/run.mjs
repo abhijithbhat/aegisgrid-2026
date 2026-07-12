@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 
 const origin = process.env.APP_ORIGIN ?? "http://localhost:3000";
 const text = await readFile(new URL("./cases.jsonl", import.meta.url), "utf8");
@@ -89,4 +89,14 @@ for (const testCase of cases) {
 }
 
 console.log(JSON.stringify(results, null, 2));
+if (results.every((result) => result.mode !== "unreachable")) {
+  const generatedAt = new Date().toISOString();
+  await writeFile(new URL("./results.json", import.meta.url), `${JSON.stringify({ generatedAt, origin, results }, null, 2)}\n`);
+  const rows = results.map((result) => `| ${result.id} | ${result.passed ? "Pass" : "Fail"} | ${result.status} | ${result.mode} |`).join("\n");
+  const table = `<!-- eval-results:start -->\n| Eval case | Result | HTTP | Mode |\n|---|---:|---:|---|\n${rows}\n\n_Last run: ${generatedAt.slice(0, 10)} · Source: [evals/results.json](evals/results.json)_\n<!-- eval-results:end -->`;
+  const readmeUrl = new URL("../README.md", import.meta.url);
+  const readme = await readFile(readmeUrl, "utf8");
+  const updated = readme.replace(/<!-- eval-results:start -->[\s\S]*?<!-- eval-results:end -->/, table);
+  await writeFile(readmeUrl, updated);
+}
 if (results.some((result) => !result.passed)) process.exit(1);

@@ -8,7 +8,7 @@
 
 ![AegisGrid 2026 — from fragmented signals to one safe, explainable decision](public/og.png)
 
-[Production preview](https://aegisgrid-2026.abhijithhubli129918.chatgpt.site) · [Seven-minute judge walkthrough](docs/judge-demo.md) · [Architecture](docs/architecture.md) · [Security policy](SECURITY.md)
+**Cloud Run production preview:** pending a billing-enabled Google Cloud project; no `run.app` URL exists yet. [Secondary development preview](https://aegisgrid-2026.abhijithhubli129918.chatgpt.site) · [Seven-minute judge walkthrough](docs/judge-demo.md) · [Architecture](docs/architecture.md) · [Security policy](SECURITY.md)
 
 > From fragmented signals to one safe, explainable decision.
 
@@ -60,7 +60,7 @@ flowchart LR
   F --> G["Append-only audit event"]
 ```
 
-AI responses use a strict structured contract, current official `@google/genai`, JSON-schema constrained output, independent runtime validation, evidence-ID verification, and exactly one constrained repair attempt. `GEMINI_MODEL` controls the model; the documented default is the stable, cost-efficient `gemini-2.5-flash-lite` verified from [Google's model guide](https://ai.google.dev/gemini-api/docs/models/gemini-2.5-flash-lite).
+AI responses use a strict structured contract, current official `@google/genai`, JSON-schema constrained output, independent runtime validation, evidence-ID verification, and exactly one constrained repair attempt. `GEMINI_MODEL` controls the model; the documented default is the stable, generally available `gemini-3.5-flash`, verified on 2026-07-12 against [Google's current Gemini 3.5 Flash model guide](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash) and [release notes](https://ai.google.dev/gemini-api/docs/changelog).
 
 When the provider or key is unavailable, the UI says **“AI analysis unavailable.”** Risk, priority ordering, telemetry, upload validation, and routing continue. Semantic fusion, contradiction synthesis, AI confidence, and generated announcements are marked unavailable rather than replaced with canned output.
 
@@ -85,7 +85,7 @@ Open `http://localhost:3000`. A Gemini key is optional for deterministic and sce
 | Variable | Purpose |
 |---|---|
 | `GEMINI_API_KEY` | Server-only Gemini API credential |
-| `GEMINI_MODEL` | Provider model, default `gemini-2.5-flash-lite` |
+| `GEMINI_MODEL` | Provider model, default `gemini-3.5-flash` |
 | `AI_TIMEOUT_MS` | Per-request provider deadline (bounded in code) |
 | `AI_MAX_RETRIES` | Transient retries; maximum one retry |
 | `ENABLE_FIRESTORE` | Enables durable server-side incidents/audit persistence |
@@ -106,6 +106,19 @@ The complete local gate is `npm run verify`. Browser checks use `npm run test:e2
 
 Tests cover risk boundaries, heap order/complexity behaviour, duplicate blocking, false-duplicate preservation, accessible routing, strict AI contracts, repair/fail-safe behavior, malformed/adversarial imports, oversized files, unknown zones, cross-origin writes, typed APIs, and degraded mode.
 
+### Current eval status
+
+<!-- eval-results:start -->
+| Eval case | Result | HTTP | Mode |
+|---|---:|---:|---|
+| medical-multilingual-01 | Pass | 200 | degraded |
+| smoke-contradiction-01 | Pass | 200 | degraded |
+| false-duplicate-01 | Pass | 200 | degraded |
+| prompt-injection-schema-01 | Pass | 200 | deterministic |
+
+_Last run: 2026-07-12 · Source: [evals/results.json](evals/results.json)_
+<!-- eval-results:end -->
+
 ## Data Injection Lab contract
 
 - Maximum file size: 2 MiB on client and server.
@@ -125,7 +138,7 @@ Security review date: **2026-07-11**.
 - Uploads are allowlisted, capped at 2 MiB, parsed with bounded rows/pages/text, treated as data rather than instructions, and never persisted raw.
 - Firestore rules deny every direct browser read/write. Durable writes are server-side, schema-validated, and actor-stamped.
 - GitHub Actions runs type, lint, test, build, size, browser accessibility, and high/critical production dependency gates. CodeQL runs the `security-extended` JavaScript/TypeScript suite on `main` and weekly.
-- The current production audit has **no high or critical advisories** after upgrading Next.js, Firebase Admin, Vite, Wrangler, and the Cloudflare Vite plugin.
+- The current production audit has **no high or critical advisories** after upgrading Next.js and Firebase Admin and removing the experimental Cloudflare/vinext deployment bridge.
 
 `npm audit` still reports eight **moderate transitive** advisories: Next.js bundles an older PostCSS used only to compile trusted project CSS, and Firebase Admin's storage chain retains `uuid@9` while AegisGrid does not call the affected caller-supplied-buffer UUID APIs. npm's suggested forced fix would incorrectly downgrade core frameworks, so it is intentionally not applied. These residuals are documented rather than hidden and must be rechecked when upstream packages release compatible fixes.
 
@@ -133,7 +146,9 @@ See the [security policy](SECURITY.md) for private reporting and [detailed threa
 
 ## Cloud deployment
 
-`Dockerfile` targets Node 22 and the injected Cloud Run `PORT`. Configure Firestore through Application Default Credentials and place `GEMINI_API_KEY` in Google Secret Manager; Google recommends server-side Admin initialization and managed secrets for Cloud Run. The same UI can publish through Codex Sites in honest no-credential/degraded mode.
+`Dockerfile` uses the direct Next.js standalone server on Node 22 and binds Cloud Run's injected `PORT`. Configure Firestore through Application Default Credentials and place `GEMINI_API_KEY` in Google Secret Manager; Google recommends server-side Admin initialization and managed secrets for Cloud Run.
+
+Deployment status (2026-07-12): `gcloud run deploy aegisgrid-2026 --source . --region us-central1 --allow-unauthenticated --port 8080` reached Google Cloud, but every project accessible to the signed-in account reports `billingEnabled: false`. Google therefore refused to activate Cloud Run, Cloud Build, and Artifact Registry. The existing Codex Sites URL above remains a secondary development preview and is intentionally not represented as the production judge link.
 
 Firestore rules deny all direct browser access. Audit events are created through a server-set supervisor role and use create-only document identities. The public no-credential demo keeps scenario/telemetry state intentionally ephemeral; enabling Firestore makes audit storage durable. A real venue pilot still requires organization SSO and formal role authorization.
 

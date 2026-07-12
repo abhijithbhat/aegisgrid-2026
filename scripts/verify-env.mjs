@@ -1,4 +1,4 @@
-const model = process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash-lite";
+const model = process.env.GEMINI_MODEL?.trim() || "gemini-3.5-flash";
 const timeout = Number(process.env.AI_TIMEOUT_MS ?? 12_000);
 const retries = Number(process.env.AI_MAX_RETRIES ?? 1);
 const invalid = [];

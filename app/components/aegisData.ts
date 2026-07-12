@@ -65,7 +65,7 @@ export type Zone = {
 };
 
 export type AuditEvent = {
-  id: number;
+  id: number | string;
   timestamp: string;
   actor: string;
   action: string;
@@ -177,9 +177,9 @@ export const INITIAL_INCIDENTS: Incident[] = [
       },
       {
         source: "GUEST-ES-72",
-        fact: "Spanish report says a person fainted behind the west food area.",
+        fact: "हिंदी अतिथि रिपोर्ट: पश्चिम भोजन क्षेत्र के पीछे एक व्यक्ति बेहोश हो गया है। (A person is unconscious behind the west food area.)",
         weight: "0.82",
-        kind: "Translated text",
+        kind: "Hindi · translated text",
       },
       {
         source: "CAM-DENS-W4",
@@ -238,9 +238,9 @@ export const INITIAL_INCIDENTS: Incident[] = [
         "The service corridor is 58 metres longer but avoids the highest-density west gate flow and preserves a clear return path for the stretcher.",
     },
     announcement: {
-      language: "English · Spanish ready",
+      language: "English · हिन्दी",
       tone: "Calm / directive",
-      text: "For your safety, please keep the west stair W-3 landing clear and follow steward directions. Food services remain available via the east concourse.",
+      text: "Please keep west stair W-3 clear and follow steward directions. कृपया पश्चिमी सीढ़ी W-3 को खाली रखें और स्टेडियम कर्मचारियों के निर्देशों का पालन करें।",
     },
     uncertainty:
       "Location confidence is high. Medical condition and breathing status remain unverified; this system does not provide a diagnosis.",
@@ -537,11 +537,11 @@ export const SCENARIOS = [
     name: "Multilingual Medical Incident",
     category: "Semantic fusion",
     duration: "03:10",
-    description: "English and Spanish reports use different location wording for one unconscious guest.",
+    description: "English and Hindi reports use different scripts and location wording for one unconscious guest.",
     impact: "+3 fused reports",
     incidentId: "INC-2047",
     events: [
-      "Spanish guest report received near food area",
+      "हिंदी guest report rendered near food area",
       "English steward report references stair W-3",
       "Semantic fusion proposes a shared incident",
       "Location confidence reaches 94%",

@@ -22,6 +22,6 @@ Detailed verification results are appended before release.
 - Added an interaction-readiness guard so pre-hydration navigation clicks cannot be lost, corrected the brand landmark ARIA contract, and removed mobile horizontal overflow as a defensive safeguard.
 - Final refinement gate: 30 unit/integration tests, 6 Playwright workflow/accessibility tests, typecheck, lint, environment verification, production build, and 1.85 MiB repository payload.
 - Upgraded the public README with a judge path, architecture flow, local setup, security status, production/developer links, and CI badges.
-- Upgraded Next.js, Firebase Admin, Vite, Wrangler, Cloudflare tooling, and compatible transitive packages; the production audit now has no high or critical advisories.
+- Upgraded Next.js and Firebase Admin, removed the experimental vinext/Cloudflare deployment bridge, and refreshed compatible transitive packages; the production audit now has no high or critical advisories.
 - Centralized same-origin enforcement across upload, analysis, fusion, and audit APIs; added regression coverage, a private vulnerability-reporting policy, a high-severity dependency CI gate, and weekly CodeQL `security-extended` analysis.
 - Documented eight moderate upstream transitive advisories and their constrained reach instead of applying npm's unsafe forced framework downgrade.

@@ -41,13 +41,13 @@ export const SCENARIOS: readonly ScenarioDefinition[] = Object.freeze([
   {
     id: "multilingual-medical",
     name: "Multilingual Medical Incident",
-    description: "English and Spanish reports describe one unconscious person with different landmarks.",
+    description: "English and Hindi reports describe one unconscious person with different landmarks and scripts.",
     seed: 26003,
     durationSeconds: 65,
     initialEventPhase: "halftime",
     events: [
       event("mmi-1", 4, "report", "English report", { id: "sim-med-en", sourceId: "SIM-STAFF-WF", zoneId: "food-west", language: "en", incidentType: "medical", text: "Someone fainted behind the food kiosks by the west stairs." }),
-      event("mmi-2", 13, "report", "Spanish radio report", { id: "sim-med-es", sourceId: "SIM-RADIO-ES", zoneId: "food-west", language: "es", incidentType: "medical", text: "Una persona está inconsciente cerca del patio de comidas oeste." }),
+      event("mmi-2", 13, "report", "Hindi guest report", { id: "sim-med-hi", sourceId: "SIM-REPORT-HI", zoneId: "food-west", language: "hi", incidentType: "medical", text: "पश्चिमी भोजन क्षेत्र के पास एक व्यक्ति बेहोश है।" }),
       event("mmi-3", 31, "team-status", "Medical Alpha available", { teamId: "team-med-alpha", status: "available" }),
     ],
   },
@@ -81,4 +81,3 @@ export const SCENARIOS: readonly ScenarioDefinition[] = Object.freeze([
 ]);
 
 export const SCENARIO_BY_ID = new Map(SCENARIOS.map((scenario) => [scenario.id, scenario]));
-
