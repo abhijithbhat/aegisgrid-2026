@@ -56,6 +56,59 @@ const memoryRepository: OperationalRepository = {
   },
 };
 
+/**
+ * Keeps decision support available when Firestore is configured but cannot be
+ * reached (for example, when a Cloud Run service account is missing a role).
+ * The first provider failure permanently degrades this process to the bounded
+ * in-memory repository, and the public mode/durability flags change with it.
+ */
+export function withRepositoryFallback(
+  primary: OperationalRepository,
+  fallback: OperationalRepository = memoryRepository,
+): OperationalRepository {
+  let degraded = false;
+  const enterFallback = () => { degraded = true; };
+
+  return {
+    get mode() { return degraded ? fallback.mode : primary.mode; },
+    get durable() { return degraded ? fallback.durable : primary.durable; },
+    async upsertIncident(record) {
+      if (degraded) return fallback.upsertIncident(record);
+      try {
+        await primary.upsertIncident(record);
+      } catch {
+        enterFallback();
+        await fallback.upsertIncident(record);
+      }
+    },
+    async appendAuditEvent(event) {
+      if (degraded) return fallback.appendAuditEvent(event);
+      try {
+        await primary.appendAuditEvent(event);
+      } catch {
+        enterFallback();
+        await fallback.appendAuditEvent(event);
+      }
+    },
+    async listAuditEvents(incidentId) {
+      if (degraded) return fallback.listAuditEvents(incidentId);
+      try {
+        return await primary.listAuditEvents(incidentId);
+      } catch {
+        enterFallback();
+        return fallback.listAuditEvents(incidentId);
+      }
+    },
+    subscribe(listener, onError) {
+      if (degraded || !primary.subscribe) return () => {};
+      return primary.subscribe(listener, () => {
+        enterFallback();
+        onError();
+      });
+    },
+  };
+}
+
 let firestoreRepository: Promise<OperationalRepository> | undefined;
 
 async function createFirestoreRepository(): Promise<OperationalRepository> {
@@ -74,7 +127,7 @@ async function createFirestoreRepository(): Promise<OperationalRepository> {
     });
   const database = getFirestore(app);
 
-  return {
+  return withRepositoryFallback({
     mode: "firestore",
     durable: true,
     async upsertIncident(record) {
@@ -103,7 +156,7 @@ async function createFirestoreRepository(): Promise<OperationalRepository> {
       }, onError);
       return () => { unsubscribeIncidents(); unsubscribeAudit(); };
     },
-  };
+  });
 }
 
 export async function getOperationalRepository(): Promise<OperationalRepository> {

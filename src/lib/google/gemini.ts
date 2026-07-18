@@ -58,6 +58,14 @@ export function geminiCapability(): { available: boolean; model: string | null }
 
 function normalizeProviderError(error: unknown): GeminiInvocationError {
   const message = error instanceof Error ? error.message.toLowerCase() : "";
+  // Log the provider error for operational diagnostics (no secrets or request bodies).
+  console.error(JSON.stringify({
+    severity: "ERROR",
+    component: "gemini-provider",
+    errorName: error instanceof Error ? error.name : "UnknownError",
+    errorMessage: error instanceof Error ? error.message : String(error),
+    timestamp: new Date().toISOString(),
+  }));
   if (message.includes("timeout") || message.includes("abort")) return new GeminiInvocationError("AI_TIMEOUT", true);
   if (message.includes("429") || message.includes("rate") || message.includes("quota")) return new GeminiInvocationError("AI_RATE_LIMITED", true);
   return new GeminiInvocationError("AI_UNAVAILABLE", true);

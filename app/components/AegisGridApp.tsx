@@ -276,7 +276,8 @@ export function AegisGridApp() {
   const [toast, setToast] = useState("");
   const [aiState, setAiState] = useState<AiState>("checking");
   const [analysisByIncident, setAnalysisByIncident] = useState<Record<string, IncidentAnalysisState>>({});
-  const requestedAnalysisIds = useRef(new Set<string>());
+  const analysisStateRef = useRef(analysisByIncident);
+  const validatedAnalysisRequestByIncident = useRef(new Map<string, string>());
   const sidebarRef = useRef<HTMLElement>(null);
   const firstNavRef = useRef<HTMLButtonElement>(null);
   const mobileMenuRef = useRef<HTMLButtonElement>(null);
@@ -285,6 +286,10 @@ export function AegisGridApp() {
   const previousCriticalIds = useRef<string[]>([]);
   const [newCriticalIncident, setNewCriticalIncident] = useState<{ id: string; zoneId: string } | null>(null);
   const isInitialMount = useRef(true);
+
+  useEffect(() => {
+    analysisStateRef.current = analysisByIncident;
+  }, [analysisByIncident]);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => setInteractiveReady(true));
@@ -337,20 +342,44 @@ export function AegisGridApp() {
   const assessedIncidents = useMemo(() => incidents.map((incident) => withDeterministicRisk(incident, zones, phase)), [incidents, zones, phase]);
   const routedIncidents = useMemo(() => assessedIncidents.map((incident) => withDeterministicRoute(incident, zones)), [assessedIncidents, zones]);
   const selectedIncident = routedIncidents.find((incident) => incident.id === selectedId) ?? routedIncidents[0];
-
-  useEffect(() => {
-    const requestedIds = requestedAnalysisIds.current;
-    if (aiState !== "available" || requestedIds.has(selectedIncident.id)) return;
-    const controller = new AbortController();
-    const incidentId = selectedIncident.id;
-    requestedIds.add(incidentId);
-    const routedIncident = withDeterministicRoute(selectedIncident, zones);
-    const sources = selectedIncident.evidence.map((evidence) => ({
+  const analysisRequestBody = JSON.stringify({
+    incidentId: selectedIncident.id,
+    title: selectedIncident.title,
+    incidentType: domainIncidentType(selectedIncident.type),
+    zoneId: selectedIncident.zoneId,
+    eventPhase: domainPhase(phase),
+    deterministicRisk: {
+      score: selectedIncident.risk,
+      severity: numericSeverity(selectedIncident.risk),
+      explanation: `Configured nine-factor risk assessment for ${selectedIncident.zone}; score ${selectedIncident.risk} of 100.`,
+    },
+    sources: selectedIncident.evidence.map((evidence) => ({
       sourceId: evidence.source,
       sourceType: evidence.kind,
       text: evidence.fact,
       reliability: Math.min(1, Math.max(0, Number(evidence.weight))),
-    }));
+    })),
+    route: {
+      primaryZoneIds: selectedIncident.route.path.length ? selectedIncident.route.path : ["no-safe-route"],
+      alternateZoneIds: selectedIncident.route.alternate,
+      etaMinutes: Math.max(0, Number.parseFloat(selectedIncident.route.eta) || 0),
+      avoidedZoneIds: selectedIncident.route.avoided,
+      rationale: selectedIncident.route.rationale,
+    },
+  });
+
+  useEffect(() => {
+    if (aiState !== "available") return;
+    const requestPayload = JSON.parse(analysisRequestBody) as { incidentId: string };
+    const incidentId = requestPayload.incidentId;
+    const previousValidatedRequest = validatedAnalysisRequestByIncident.current.get(incidentId);
+    if (previousValidatedRequest === analysisRequestBody) return;
+    if (!previousValidatedRequest && analysisStateRef.current[incidentId]?.status === "available") {
+      // Direct reports already carry a contract-validated recommendation.
+      validatedAnalysisRequestByIncident.current.set(incidentId, analysisRequestBody);
+      return;
+    }
+    const controller = new AbortController();
     void Promise.resolve().then(() => {
       if (!controller.signal.aborted) {
         setAnalysisByIncident((current) => ({ ...current, [incidentId]: { status: "loading", progress: [] } }));
@@ -359,26 +388,7 @@ export function AegisGridApp() {
       method: "POST",
       headers: { "content-type": "application/json", accept: "text/event-stream" },
       signal: controller.signal,
-      body: JSON.stringify({
-        incidentId: selectedIncident.id,
-        title: selectedIncident.title,
-        incidentType: domainIncidentType(selectedIncident.type),
-        zoneId: selectedIncident.zoneId,
-        eventPhase: domainPhase(phase),
-        deterministicRisk: {
-          score: selectedIncident.risk,
-          severity: numericSeverity(selectedIncident.risk),
-          explanation: `Configured nine-factor risk assessment for ${selectedIncident.zone}; score ${selectedIncident.risk} of 100.`,
-        },
-        sources,
-        route: {
-          primaryZoneIds: routedIncident.route.path.length ? routedIncident.route.path : ["no-safe-route"],
-          alternateZoneIds: routedIncident.route.alternate,
-          etaMinutes: Math.max(0, Number.parseFloat(routedIncident.route.eta) || 0),
-          avoidedZoneIds: routedIncident.route.avoided,
-          rationale: routedIncident.route.rationale,
-        },
-      }),
+      body: analysisRequestBody,
       });
     })
       .then(async (response) => {
@@ -416,6 +426,7 @@ export function AegisGridApp() {
         const outcome = body.outcome;
         if (!outcome) throw new Error(body.error?.message ?? "Analysis request failed.");
         if (outcome.status === "available") {
+          validatedAnalysisRequestByIncident.current.set(incidentId, analysisRequestBody);
           setAnalysisByIncident((current) => ({ ...current, [incidentId]: { status: "available", recommendation: outcome.recommendation } }));
         } else {
           setAnalysisByIncident((current) => ({ ...current, [incidentId]: { status: "unavailable", reason: outcome.error?.message ?? outcome.reason ?? "Provider unavailable" } }));
@@ -427,9 +438,8 @@ export function AegisGridApp() {
       });
     return () => {
       controller.abort();
-      requestedIds.delete(incidentId);
     };
-  }, [aiState, phase, selectedIncident, zones]);
+  }, [aiState, analysisRequestBody]);
 
   useEffect(() => {
     let active = true;
@@ -767,7 +777,6 @@ export function AegisGridApp() {
     };
     setIncidents((current) => [incident, ...current]);
     setAnalysisByIncident((current) => ({ ...current, [incidentId]: { status: "available", recommendation } }));
-    requestedAnalysisIds.current.add(incidentId);
     setSelectedId(incidentId);
     setView("command");
     addAudit("Direct report added to queue", `${sourceId} was added for supervisor assessment; no dispatch occurred.`, incidentId, "—", "Awaiting approval");
@@ -827,12 +836,6 @@ export function AegisGridApp() {
       }
       return next;
     });
-    setAnalysisByIncident((current) => {
-      const next = { ...current };
-      delete next[incidentId];
-      return next;
-    });
-    requestedAnalysisIds.current.delete(incidentId);
     if (scenarioId === "accessible-block" && step >= 1) setPhase("Egress");
     if (scenarioId === "false-duplicate" && step === 3) addAudit("Fusion comparison rejected", "REPORT-A-FALL and REPORT-B-EQUIPMENT remain separate; both sources are preserved.", incidentId, "2 candidate reports", "2 distinct incidents", "Fusion Engine");
   }, [addAudit]);
@@ -840,8 +843,6 @@ export function AegisGridApp() {
   const resetSimulation = useCallback(() => {
     setZones(INITIAL_ZONES);
     setIncidents(INITIAL_INCIDENTS);
-    setAnalysisByIncident({});
-    requestedAnalysisIds.current.clear();
     setPhase("Live match");
     setSimulation((current) => ({ ...current, running: false, event: "Baseline restored" }));
     setToast("Scenario baseline restored");

@@ -40,6 +40,78 @@ test.describe("AegisGrid operational workflows", () => {
     await expect(page.getByText("Likely medical · West Concourse · 82% mapping confidence")).toHaveCount(0);
   });
 
+  test("keeps validated AI output stable while a supervisor edits operational fields", async ({ page }) => {
+    let analyzeRequests = 0;
+    const recommendation = {
+      summary: "One synthetic medical report requires supervisor review near west stair W-3.",
+      incidentType: "medical",
+      severity: "high",
+      confidence: 0.9,
+      evidence: [{ sourceId: "STAFF-184", fact: "A steward reports an unresponsive adult near west stair W-3.", weight: 0.96 }],
+      contradictions: [],
+      missingInformation: ["Breathing status is unconfirmed."],
+      clarifyingQuestions: ["Is the guest breathing?"],
+      recommendedActions: [{ priority: 1, action: "Confirm breathing status.", ownerRole: "Medical Alpha", targetMinutes: 2, justification: "Medical triage requires confirmation.", requiresApproval: true }],
+      recommendedTeamType: "medical",
+      equipment: ["AED"],
+      announcement: { language: "English", tone: "calm", text: "Please keep west stair W-3 clear for the medical team." },
+      uncertaintyNote: "The guest's clinical status remains unconfirmed.",
+      requiresHumanApproval: true,
+    };
+    await page.route("**/api/health", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, ai: { available: true, status: "configured" } }) }));
+    await page.route("**/api/audit", (route) => route.fulfill({ status: route.request().method() === "GET" ? 200 : 201, contentType: "application/json", body: JSON.stringify({ ok: true, events: [], persistence: { mode: "memory", durable: false } }) }));
+    await page.route("**/api/incidents", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, persistence: { mode: "memory", durable: false } }) }));
+    await page.route("**/api/analyze", (route) => {
+      analyzeRequests += 1;
+      return route.fulfill({
+        status: 200,
+        contentType: "text/event-stream",
+        body: `event: result\ndata: ${JSON.stringify({ outcome: { status: "available", recommendation } })}\n\n`,
+      });
+    });
+
+    await page.goto("/");
+    await expect(page.getByText("Live provider output · strict contract validated")).toBeVisible();
+    await expect.poll(() => analyzeRequests).toBe(1);
+
+    await page.getByRole("tab", { name: "Response plan" }).click();
+    await page.getByRole("combobox", { name: "Assign response team" }).selectOption("Medical Bravo");
+    await expect.poll(() => analyzeRequests).toBe(1);
+    await expect(page.getByText("Validating evidence with the AI provider…")).toHaveCount(0);
+
+    await page.getByRole("tab", { name: "Communication" }).click();
+    await page.getByRole("button", { name: "Edit draft" }).click();
+    const draft = page.getByLabel("Edit announcement draft");
+    await draft.fill("Please keep west stair W-3 clear; follow steward directions.");
+    await page.getByRole("button", { name: "Save draft" }).click();
+    await expect(page.getByText("Please keep west stair W-3 clear; follow steward directions.")).toBeVisible();
+    await expect.poll(() => analyzeRequests).toBe(1);
+  });
+
+  test("filters, exports, and records a supervisor resolution in the audit workflow", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "Audit" }).click();
+
+    const search = page.getByRole("searchbox", { name: "Search audit log" });
+    await search.fill("INC-2045");
+    await expect(page.getByText("Showing 1 of 4")).toBeVisible();
+    await search.fill("");
+    await page.getByRole("combobox", { name: "Filter by actor" }).selectOption("Routing Engine");
+    await expect(page.getByText("Showing 1 of 4")).toBeVisible();
+    await page.getByRole("combobox", { name: "Filter by actor" }).selectOption("All actors");
+
+    const downloadPromise = page.waitForEvent("download");
+    await page.getByRole("button", { name: "Export audit log" }).click();
+    await expect((await downloadPromise).suggestedFilename()).toBe("aegisgrid-audit-log.json");
+
+    const resolve = page.getByRole("button", { name: "Mark resolved" });
+    await expect(resolve).toBeDisabled();
+    await page.getByRole("textbox", { name: "Resolution note" }).fill("Synthetic QA resolution verified; no dispatch occurred.");
+    await expect(resolve).toBeEnabled();
+    await resolve.click();
+    await expect(page.getByText("Incident resolved", { exact: true }).first()).toBeVisible();
+  });
+
   test("keeps mobile navigation off-canvas, focusable only when open, and Escape-closeable", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");

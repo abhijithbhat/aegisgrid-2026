@@ -132,7 +132,7 @@ _Last run: 2026-07-17 · Source: [evals/results.json](evals/results.json)_
 
 Security review date: **2026-07-11**.
 
-- No credentials, private keys, `.env` files, or known GitHub/Gemini token formats are tracked in the repository or its two-commit history.
+- No credentials, private keys, `.env` files, or known GitHub/Gemini token formats are tracked in the repository history.
 - Production responses set CSP, HSTS, `nosniff`, frame denial, opener isolation, a restrictive permissions policy, and strict referrer handling.
 - Browser API calls are same-origin only; cross-origin requests are rejected before parsing uploads, validating actions, or invoking Gemini.
 - Uploads are allowlisted, capped at 2 MiB, parsed with bounded rows/pages/text, treated as data rather than instructions, and never persisted raw.
@@ -148,7 +148,7 @@ See the [security policy](SECURITY.md) for private reporting and [detailed threa
 
 `Dockerfile` uses the direct Next.js standalone server on Node 22 and binds Cloud Run's injected `PORT`. Configure Firestore through Application Default Credentials and place `GEMINI_API_KEY` in Google Secret Manager; Google recommends server-side Admin initialization and managed secrets for Cloud Run.
 
-Deployment status (2026-07-16): The application is successfully deployed to Google Cloud Run at [https://aegisgrid-2026-799660927467.us-central1.run.app](https://aegisgrid-2026-799660927467.us-central1.run.app) and backed by a Native Firestore database with real-time sync. Gemini is configured via Secret Manager.
+Deployment status (2026-07-16): The application is successfully deployed to Google Cloud Run at [https://aegisgrid-2026-799660927467.us-central1.run.app](https://aegisgrid-2026-799660927467.us-central1.run.app). A Native Firestore database is provisioned and Gemini is configured via Secret Manager. Firestore durability is capability-sensitive: if the runtime service account cannot complete a provider operation, the server reports `memory` / `durable: false` and continues in a bounded in-process fallback rather than claiming persistence.
 
 Firestore rules deny all direct browser access. Audit events are created through a server-set supervisor role and use create-only document identities. The public no-credential demo keeps scenario/telemetry state intentionally ephemeral; enabling Firestore makes audit storage durable. A real venue pilot still requires organization SSO and formal role authorization.
 
