@@ -32,7 +32,7 @@ Deterministic code owns arithmetic, validation, route calculation, heap ordering
 
 ## Provider choices verified July 2026
 
-The app uses Google's GA [`@google/genai`](https://ai.google.dev/gemini-api/docs/libraries) package and configures the stable, generally available [`gemini-3.5-flash`](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash) through `GEMINI_MODEL`. This model ID was rechecked against Google's model page and release notes on 2026-07-12. Structured output uses `responseMimeType: application/json` plus `responseJsonSchema`, then Zod validation. Per-request `httpOptions.timeout` and bounded retry settings are explicit.
+The app uses Google's GA [`@google/genai`](https://ai.google.dev/gemini-api/docs/libraries) package and configures the stable [`gemini-3.1-flash-lite`](https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-lite) through `GEMINI_MODEL`. This model ID and structured-output support were rechecked against Google's documentation and verified in production on 2026-07-18. Structured output uses `responseMimeType: application/json` plus `responseJsonSchema`, then strict Zod validation. Per-request `httpOptions.timeout` and bounded retry settings are explicit.
 
 Firestore uses Firebase Admin with Application Default Credentials on Google Cloud, as recommended by the [server setup guide](https://firebase.google.com/docs/admin/setup). Cloud Run deployment stores `GEMINI_API_KEY` in Secret Manager and injects it server-side.
 

@@ -3,8 +3,8 @@ const stringArray = { type: "array", items: { type: "string" } };
 /**
  * Gemini `responseJsonSchema` for incident analysis. Constraint keywords
  * (minItems, maxItems, minimum, maximum, additionalProperties) are omitted
- * because gemini-3.5-flash rejects them with 400 INVALID_ARGUMENT. The
- * app's own response-validator enforces those limits at runtime instead.
+ * because supported Gemini runtimes can reject parts of the full constraint
+ * vocabulary. The app's response-validator enforces those limits at runtime.
  */
 export const AI_RECOMMENDATION_JSON_SCHEMA: Record<string, unknown> = {
   type: "object",

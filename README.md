@@ -60,7 +60,7 @@ flowchart LR
   F --> G["Append-only audit event"]
 ```
 
-AI responses use a strict structured contract, current official `@google/genai`, JSON-schema constrained output, independent runtime validation, evidence-ID verification, and exactly one constrained repair attempt. `GEMINI_MODEL` controls the model; the documented default is the stable, generally available `gemini-3.5-flash`, verified on 2026-07-12 against [Google's current Gemini 3.5 Flash model guide](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash) and [release notes](https://ai.google.dev/gemini-api/docs/changelog).
+AI responses use a strict structured contract, current official `@google/genai`, JSON-schema constrained output, independent runtime validation, evidence-ID verification, and exactly one constrained repair attempt. `GEMINI_MODEL` controls the model; the documented default is the stable `gemini-3.1-flash-lite`, verified in production on 2026-07-18 and against [Google's current model guide](https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-lite) and [structured-output documentation](https://ai.google.dev/gemini-api/docs/generate-content/structured-output).
 
 When the provider or key is unavailable, the UI says **“AI analysis unavailable.”** Risk, priority ordering, telemetry, upload validation, and routing continue. Semantic fusion, contradiction synthesis, AI confidence, and generated announcements are marked unavailable rather than replaced with canned output.
 
@@ -85,7 +85,7 @@ Open `http://localhost:3000`. A Gemini key is optional for deterministic and sce
 | Variable | Purpose |
 |---|---|
 | `GEMINI_API_KEY` | Server-only Gemini API credential |
-| `GEMINI_MODEL` | Provider model, default `gemini-3.5-flash` |
+| `GEMINI_MODEL` | Provider model, default `gemini-3.1-flash-lite` |
 | `AI_TIMEOUT_MS` | Per-request provider deadline (bounded in code) |
 | `AI_MAX_RETRIES` | Transient retries; maximum one retry |
 | `ENABLE_FIRESTORE` | Enables durable server-side incidents/audit persistence |
