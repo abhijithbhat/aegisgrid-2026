@@ -1,0 +1,54 @@
+{
+  "name": "aegisgrid-2026",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build --webpack",
+    "start": "next start",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:e2e": "playwright test",
+    "test:a11y": "playwright test tests/e2e/accessibility.spec.ts",
+    "screenshots": "node scripts/capture-views.mjs",
+    "typecheck": "tsc --noEmit",
+    "verify": "npm run typecheck && npm run lint && npm run test && npm run verify:env && npm run build && npm run check:size",
+    "check:size": "node scripts/check-repo-size.mjs",
+    "verify:env": "node scripts/verify-env.mjs",
+    "load:test": "node scripts/load-test.mjs",
+    "evals": "node evals/run.mjs",
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next"
+  },
+  "dependencies": {
+    "@fontsource-variable/sora": "^5.2.8",
+    "@fontsource/ibm-plex-mono": "^5.2.7",
+    "@fontsource/ibm-plex-sans": "^5.2.8",
+    "@google/genai": "^1.30.0",
+    "firebase-admin": "^14.1.0",
+    "lucide-react": "^0.468.0",
+    "next": "^16.2.10",
+    "pdfjs-dist": "^5.4.394",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
+    "@playwright/test": "^1.56.1",
+    "@tailwindcss/postcss": "4.2.1",
+    "@types/node": "22.19.19",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "eslint": "9.39.4",
+    "eslint-config-next": "^16.2.10",
+    "react-server-dom-webpack": "19.2.6",
+    "tailwindcss": "4.2.1",
+    "typescript": "5.9.3",
+    "vite": "^8.1.4",
+    "vitest": "^4.0.8"
+  },
+  "type": "module"
+}

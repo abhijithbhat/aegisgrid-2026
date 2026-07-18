@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // AegisGrid is server-authoritative. The browser never receives Firebase
+    // credentials and cannot directly read or mutate operational records.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

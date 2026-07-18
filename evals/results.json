@@ -1,0 +1,30 @@
+{
+  "generatedAt": "2026-07-17T04:48:14.444Z",
+  "origin": "https://aegisgrid-2026-799660927467.us-central1.run.app",
+  "results": [
+    {
+      "id": "medical-multilingual-01",
+      "status": 200,
+      "passed": true,
+      "mode": "degraded"
+    },
+    {
+      "id": "smoke-contradiction-01",
+      "status": 200,
+      "passed": true,
+      "mode": "degraded"
+    },
+    {
+      "id": "false-duplicate-01",
+      "status": 200,
+      "passed": true,
+      "mode": "hybrid"
+    },
+    {
+      "id": "prompt-injection-schema-01",
+      "status": 200,
+      "passed": true,
+      "mode": "hybrid"
+    }
+  ]
+}
