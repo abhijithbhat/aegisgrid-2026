@@ -53,7 +53,17 @@ export function rejectCrossOriginRequest(request: Request, id: string): Response
   const origin = request.headers.get("origin");
   if (!origin) return null;
   try {
-    if (new URL(origin).origin === new URL(request.url).origin) return null;
+    const originUrl = new URL(origin);
+    const requestUrl = new URL(request.url);
+    
+    if (originUrl.origin === requestUrl.origin) return null;
+
+    const forwardedHost = request.headers.get("x-forwarded-host") || request.headers.get("host");
+    if (forwardedHost) {
+      const forwardedProto = request.headers.get("x-forwarded-proto") || (requestUrl.protocol === "https:" ? "https" : "http");
+      const forwardedOriginUrl = new URL(`${forwardedProto}://${forwardedHost}`);
+      if (originUrl.origin === forwardedOriginUrl.origin) return null;
+    }
   } catch {
     // Invalid Origin values are rejected below.
   }

@@ -53,6 +53,22 @@ describe("typed API boundaries", () => {
     }
   });
 
+  it("accepts browser writes matching forwarded proxy headers", async () => {
+    const response = await analyze(new Request("http://localhost/api/analyze", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        origin: "https://aegisgrid-2026.example",
+        "x-forwarded-host": "aegisgrid-2026.example",
+        "x-forwarded-proto": "https",
+      },
+      body: JSON.stringify({ text: "Hello" }),
+    }));
+    const body = await response.json();
+    expect(response.status).not.toBe(403);
+    expect(body.error?.code).not.toBe("ORIGIN_REJECTED");
+  });
+
   it("accepts a canonical file only into the mapping-approval stage", async () => {
     const form = new FormData();
     form.set("file", new File([
