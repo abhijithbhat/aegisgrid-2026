@@ -132,6 +132,35 @@ describe("strict AI response contract", () => {
     expect(outcome.repairAttempted).toBe(true);
   });
 
+  it("deterministically removes invented citations without changing grounded evidence", async () => {
+    const response = validAI();
+    response.evidence.push({
+      sourceId: "INVENTED-SOURCE",
+      fact: "An unsupported source claims a different severity.",
+      weight: 0.4,
+    });
+    response.contradictions.push({
+      sourceIds: ["SRC-1", "INVENTED-SOURCE"],
+      description: "The invented source conflicts with the report.",
+      operationalImpact: "The severity might be lower.",
+    });
+    const repair = vi.fn(async () => validAI());
+
+    const outcome = await validateAIResponse(
+      response,
+      { allowedSourceIds: ["SRC-1"] },
+      repair,
+    );
+
+    expect(repair).not.toHaveBeenCalled();
+    expect(outcome.status).toBe("available");
+    expect(outcome.repairAttempted).toBe(true);
+    if (outcome.status === "available") {
+      expect(outcome.recommendation.evidence).toEqual([response.evidence[0]]);
+      expect(outcome.recommendation.contradictions).toEqual([]);
+    }
+  });
+
   it("rejects an invented evidence source", async () => {
     const outcome = await validateAIResponse(validAI(), { allowedSourceIds: ["OTHER"] });
     expect(outcome.status).toBe("degraded");

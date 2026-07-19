@@ -109,6 +109,7 @@ export async function analyzeWithProvider(
         systemPrompt: repairRequest.instruction,
         dataPayload: JSON.stringify({
           contractVersion: repairRequest.contractVersion,
+          allowedSourceIds: [...input.contractContext.allowedSourceIds],
           issues: repairRequest.issues,
           invalidResponse: repairRequest.invalidResponse,
         }),
@@ -117,4 +118,3 @@ export async function analyzeWithProvider(
     ),
   );
 }
-

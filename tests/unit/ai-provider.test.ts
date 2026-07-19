@@ -35,8 +35,12 @@ describe("AI provider orchestration", () => {
   });
 
   it("repairs malformed JSON exactly once and revalidates it", async () => {
-    const generateStructured = vi.fn(async ({ purpose }: { purpose: "incident-analysis" | "repair" }) =>
-      purpose === "incident-analysis" ? "{not-json" : JSON.stringify(recommendation()));
+    const generateStructured = vi.fn(async ({ purpose, dataPayload }: { purpose: "incident-analysis" | "repair"; dataPayload: string }) => {
+      if (purpose === "incident-analysis") return "{not-json";
+      const repairData = JSON.parse(dataPayload) as { allowedSourceIds: string[] };
+      expect(repairData.allowedSourceIds).toEqual(["SRC-1"]);
+      return JSON.stringify(recommendation());
+    });
     const provider: AIProvider = { name: "test", generateStructured };
     const outcome = await analyzeWithProvider({ ...baseInput, provider, maxAttempts: 1 });
     expect(generateStructured).toHaveBeenCalledTimes(2);

@@ -104,7 +104,7 @@ npm audit --omit=dev --audit-level=high
 
 The complete local gate is `npm run verify`. Browser checks use `npm run test:e2e`; the AI eval harness uses `npm run evals` against `APP_ORIGIN`.
 
-The current release suite contains **42 unit/integration tests and 23 Playwright checks**. Browser tests run hermetically with external persistence disabled and provider responses mocked per test, so a developer's local Gemini key cannot make the result flaky. Tests cover risk boundaries, heap order/complexity behaviour, duplicate blocking, false-duplicate preservation, accessible routing, strict AI contracts, repair/fail-safe behavior, prompt injection, malformed/adversarial imports, oversized files, unknown zones, cross-origin writes, security headers, typed APIs, deterministic simulator reset, degraded mode, keyboard navigation, reduced motion, and 320 px reflow with automated axe scans.
+The current release suite contains **43 unit/integration tests and 23 Playwright checks**. Browser tests run hermetically with external persistence disabled and provider responses mocked per test, so a developer's local Gemini key cannot make the result flaky. Tests cover risk boundaries, heap order/complexity behaviour, duplicate blocking, false-duplicate preservation, accessible routing, strict AI contracts, constrained citation repair/fail-safe behavior, prompt injection, malformed/adversarial imports, oversized files, unknown zones, cross-origin writes, security headers, typed APIs, deterministic simulator reset, degraded mode, keyboard navigation, reduced motion, and 320 px reflow with automated axe scans.
 
 ### Current eval status
 

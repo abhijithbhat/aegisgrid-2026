@@ -34,4 +34,5 @@ Detailed verification results are appended before release.
 - Hardened the production same-origin boundary so spoofed forwarded-host headers cannot expand a configured `APP_ORIGIN` allowlist.
 - Made browser tests independent of developer credentials, added an adversarial prompt-injection UI path, deterministic simulator reset coverage, and response-header assertions.
 - Expanded accessibility automation across every primary view at desktop, mobile, and 320 px; added keyboard, skip-link, reduced-motion, increased-contrast, and forced-colours coverage/support.
-- Final release gate passed after all changes: strict typecheck, lint, 42 unit/integration tests, environment validation, production build, 23 Playwright checks, repository-size enforcement at 5.81 MiB, and no high or critical production dependency advisories.
+- Added deterministic removal of invented evidence/contradiction source IDs before the single bounded model-repair attempt; supplied citations remain unchanged and unsupported claims never enter the operator brief.
+- Final release gate passed after all changes: strict typecheck, lint, 43 unit/integration tests, environment validation, production build, 23 Playwright checks, repository-size enforcement, and no high or critical production dependency advisories.
