@@ -1,0 +1,232 @@
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 70;
+  height: var(--topbar);
+  display: grid;
+  grid-template-columns: minmax(255px, auto) 1fr auto;
+  align-items: center;
+  background: rgba(8, 18, 31, 0.96);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(12px);
+}
+
+.topbar-brand {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px;
+  border-right: 1px solid var(--border-soft);
+}
+
+.wordmark {
+  display: block;
+  font-family: "Arial Narrow", "Avenir Next Condensed", sans-serif;
+  font-size: 21px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  line-height: 1;
+}
+
+.wordmark span {
+  color: var(--cyan);
+}
+
+.topbar-brand small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.edition {
+  align-self: flex-start;
+  margin-top: 18px;
+  color: var(--amber);
+  font: 800 8px/1 monospace;
+  letter-spacing: 0.08em;
+}
+
+.mobile-menu-button {
+  display: none;
+  border: 0;
+  background: transparent;
+  padding: 6px;
+}
+
+.topbar-status {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+  min-width: 0;
+}
+
+.feed-badge,
+.ai-health {
+  min-height: 27px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-soft);
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.feed-badge > i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 0 3px rgba(56, 211, 223, 0.12);
+}
+
+.ai-health.available {
+  color: var(--green);
+  border-color: rgba(79, 214, 162, 0.28);
+}
+
+.ai-health.unavailable {
+  color: var(--amber);
+  border-color: rgba(240, 180, 74, 0.3);
+}
+
+.event-clock {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.event-clock span,
+.event-clock small {
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.event-clock strong {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+}
+
+.topbar-actions {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  border-left: 1px solid var(--border-soft);
+}
+
+.phase-select {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 14px;
+}
+
+.phase-select > span {
+  color: var(--muted);
+  font-size: 7px;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+}
+
+.phase-select select {
+  min-width: 105px;
+  border: 0;
+  padding: 0 18px 0 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.top-action-button {
+  position: relative;
+  width: 44px;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
+  border-left: 1px solid var(--border-soft);
+  color: var(--text-soft);
+}
+
+.top-action-button:hover {
+  background: var(--surface-2);
+  color: var(--cyan);
+}
+
+.notification-button > span {
+  position: absolute;
+  top: 15px;
+  right: 8px;
+  min-width: 15px;
+  height: 15px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--red);
+  color: white;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.supervisor-profile {
+  height: 100%;
+  min-width: 216px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 15px;
+  border: 0;
+  border-left: 1px solid var(--border-soft);
+  background: transparent;
+  text-align: left;
+}
+
+.supervisor-profile:hover {
+  background: var(--surface-2);
+}
+
+.supervisor-profile > span {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  background: var(--cyan-dim);
+  color: var(--cyan);
+  border: 1px solid rgba(56, 211, 223, 0.32);
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.supervisor-profile div {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.supervisor-profile strong {
+  font-size: 11px;
+}
+
+.supervisor-profile small {
+  color: var(--muted);
+  font-size: 8px;
+}

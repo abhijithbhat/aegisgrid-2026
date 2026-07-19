@@ -4,8 +4,21 @@
  * surface independently reviewable and maintainable.
  */
 @import "./styles/foundation.css";
+@import "./styles/app-chrome.css";
+@import "./styles/workspace-foundation.css";
+@import "./styles/command-workspace.css";
 @import "./styles/incident-intelligence.css";
+@import "./styles/incident-response.css";
+@import "./styles/incident-routing.css";
+@import "./styles/incident-communication.css";
+@import "./styles/view-headings.css";
 @import "./styles/workspaces.css";
+@import "./styles/simulator-workspace.css";
+@import "./styles/audit-workspace.css";
+@import "./styles/workspace-responsive.css";
 @import "./styles/operating-picture.css";
 @import "./styles/competition-polish.css";
+@import "./styles/competition-supporting.css";
+@import "./styles/competition-responsive.css";
+@import "./styles/semantic-surface.css";
 @import "./styles/accessibility-motion.css";

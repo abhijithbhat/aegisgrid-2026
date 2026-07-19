@@ -83,3 +83,56 @@ test("page landmarks and heading hierarchy expose the current workspace", async 
     "page",
   );
 });
+
+test("dynamic validation and data mappings expose programmatic status semantics", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Data Lab", exact: true }).click();
+  await page.getByRole("tab", { name: "Direct report" }).click();
+  await page.getByLabel("Incident report text").fill("Too short");
+  await page.getByRole("button", { name: "Interpret report with AI" }).click();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Add a little more operational detail" }),
+  ).toBeVisible();
+
+  await page.getByRole("tab", { name: "File upload" }).click();
+  const csv = [
+    "timestamp,zone_id,occupancy,capacity,event_phase",
+    "2026-07-19T07:00:00Z,W-CONC,900,1000,live-match",
+  ].join("\n");
+  await page
+    .locator('input[type="file"]')
+    .setInputFiles({ name: "accessible.csv", mimeType: "text/csv", buffer: Buffer.from(csv) });
+
+  const mappings = page.getByRole("table", { name: "Proposed schema mappings" });
+  await expect(mappings).toBeVisible();
+  await expect(mappings.getByRole("columnheader")).toHaveCount(3);
+  await expect(mappings.getByRole("row")).toHaveCount(6);
+  await page.getByRole("button", { name: "Validate approved mapping" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "1 valid" })).toBeVisible();
+  await expect(page.getByRole("table").last()).toContainText("Validation");
+});
+
+test("WCAG text-spacing overrides preserve every primary workspace", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  await page.addStyleTag({
+    content: `
+      * { line-height: 1.5 !important; letter-spacing: 0.12em !important; word-spacing: 0.16em !important; }
+      p { margin-bottom: 2em !important; }
+    `,
+  });
+
+  for (const view of ["Command", "Data Lab", "Simulator", "Audit"] as const) {
+    await page.getByRole("button", { name: view, exact: true }).click();
+    await expect(page.getByRole("main")).toBeVisible();
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
+      .toBeLessThanOrEqual(1440);
+    const results = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22a", "wcag22aa"])
+      .analyze();
+    expect(results.violations).toEqual([]);
+  }
+});

@@ -1,0 +1,125 @@
+/* Supporting workspaces use the same readable scale and premium surfaces. */
+.lab-security-bar strong,
+.lab-security-bar div span,
+.lab-security-bar > span,
+.mode-switch button,
+.dropzone > span:not(.dropzone-icon),
+.uploaded-file strong,
+.uploaded-file div span,
+.file-ready,
+.direct-report > label,
+.text-safety-note,
+.text-result strong,
+.text-result span,
+.form-error,
+.ingestion-steps span,
+.ingestion-steps i,
+.panel-description,
+.mapping-status,
+.mapping-row.header,
+.source-column,
+.mapping-row select,
+.confidence-value,
+.mapping-actions > span,
+.preview-status,
+.data-table th,
+.data-table th small,
+.data-table td,
+.data-table td input,
+.row-valid,
+.empty-table span,
+.preview-footer div span,
+.scenario-run-state > span,
+.scenario-run-state small,
+.scenario-number,
+.scenario-list-copy strong,
+.scenario-list-copy small,
+.scenario-library-note span,
+.scenario-stage-head p,
+.scenario-impact,
+.sim-clock > span,
+.sim-event-now small,
+.transport-primary,
+.speed-control,
+.seed-control,
+.seed-control input,
+.timeline-node,
+.timeline-list small,
+.timeline-list strong,
+.timeline-state,
+.assertion-list strong,
+.assertion-list p,
+.assertion-ok,
+.seed-explanation p,
+.sim-output-card span,
+.sim-output-card small,
+.audit-kpis small,
+.audit-kpis div > span,
+.search-field input,
+.audit-filters select,
+.audit-table th,
+.audit-table td,
+.actor-icon,
+.audit-incident,
+.version-text,
+.audit-log-footer,
+.resolution-card > p,
+.resolution-hint,
+.audit-policy-card li,
+.audit-integrity-card strong,
+.audit-integrity-card p,
+.global-footer,
+.toast strong,
+.toast small,
+.risk-breakdown b,
+.risk-breakdown small,
+.risk-breakdown p {
+  font-size: 10px;
+}
+
+.mode-switch button,
+.uploaded-file strong,
+.direct-report > label,
+.text-result strong,
+.scenario-list-copy strong,
+.timeline-list strong,
+.audit-integrity-card strong,
+.toast strong {
+  font-size: 11px;
+}
+
+input,
+select,
+textarea {
+  border-radius: 8px;
+}
+
+.dropzone,
+.uploaded-file,
+.text-result,
+.mapping-status,
+.scenario-list button,
+.simulation-monitor,
+.audit-kpis article,
+.audit-integrity-card,
+.toast,
+.queue-policy-note,
+.risk-breakdown {
+  border-radius: 11px;
+}
+
+.scenario-list button.is-active {
+  border-color: rgba(114, 223, 215, 0.6);
+  background: linear-gradient(135deg, rgba(114, 223, 215, 0.13), rgba(114, 223, 215, 0.04));
+}
+
+.transport-primary {
+  border-radius: 9px;
+  background: linear-gradient(135deg, var(--cyan-soft), #59c8c0);
+}
+
+.global-footer {
+  min-height: 66px;
+  padding-inline: 32px;
+  background: rgba(4, 8, 13, 0.82);
+}

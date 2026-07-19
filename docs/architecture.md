@@ -22,7 +22,7 @@ Deterministic code owns arithmetic, validation, route calculation, heap ordering
 ## Runtime surfaces
 
 - `app/` contains the operator experience and typed server routes.
-- `app/styles/` separates the ordered global cascade by responsibility, while `AppChrome` isolates global navigation, status, and footer semantics from incident workflow state.
+- `app/styles/` separates the ordered global cascade by responsibility, while `AppChrome` isolates global navigation, status, and footer semantics from incident workflow state. Command metrics, incident intelligence/response/routing/communication, Data Lab source/mapping/preview, audit persistence, simulation state, and supervisor mutations are each isolated behind focused components or typed hooks; the application shell only composes them.
 - `src/lib/risk` calculates the transparent 0–100 baseline.
 - `src/lib/incidents` blocks and ranks duplicate candidates, then maintains the binary heap.
 - `src/lib/routing` calculates primary, alternate, and naive routes over an adjacency list.
@@ -85,7 +85,7 @@ Event phase is one visible normalized component with a configured weight, not a 
 
 ## Quality gates
 
-Every push must pass Prettier, strict TypeScript, ESLint core-web-vitals, unit/integration coverage, environment validation, a production build, repository-size enforcement, and Playwright browser checks. Coverage thresholds are executable configuration rather than documentation: 90% statements, 82% branches, 90% functions, and 90% lines across the domain and server-boundary modules.
+Every push must pass Prettier, strict TypeScript, ESLint core-web-vitals, unit/integration coverage, environment validation, a production build, repository-size enforcement, a zero-moderate-or-higher production dependency audit, and Playwright browser checks. Coverage thresholds are executable configuration rather than documentation: 93% statements, 85% branches, 95% functions, and 95% lines across the domain and server-boundary modules.
 
 ## Failure semantics
 

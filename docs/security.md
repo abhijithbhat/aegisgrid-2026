@@ -28,14 +28,7 @@ AI calls use a short timeout, one bounded retry with jitter for transient failur
 
 ## Supply-chain status
 
-The July 2026 security refresh upgraded Next.js and Firebase Admin, removed the experimental vinext/Cloudflare deployment bridge, and refreshed compatible transitive packages. `npm audit --omit=dev --audit-level=high` passes with no high or critical production advisories. CI repeats that gate on every push, and CodeQL runs the `security-extended` JavaScript/TypeScript suite on `main` and weekly.
-
-Eight moderate transitive advisories remain visible rather than being suppressed:
-
-- Next.js currently bundles a PostCSS version affected when stringifying attacker-controlled CSS. AegisGrid compiles only trusted repository CSS and accepts no CSS/template uploads.
-- Firebase Admin's optional storage dependency chain currently retains `uuid@9`. AegisGrid does not call the affected v3/v5/v6 APIs with a caller-supplied output buffer, and Firestore is disabled by default.
-
-npm's proposed forced resolution would downgrade core frameworks and is not a safe fix. Reassess these transitive versions when compatible upstream releases become available.
+The July 2026 security refresh upgraded Next.js and Firebase Admin, removed the experimental vinext/Cloudflare deployment bridge, and refreshed compatible transitive packages. Compatible npm overrides pin PostCSS 8.5.16 and UUID 11.1.1 across the affected framework/provider subtrees; the production build and Firestore adapter suite verify those resolutions. A full `npm audit` currently reports zero known vulnerabilities across the installed dependency graph. CI rejects any moderate, high, or critical production advisory on every push, and CodeQL runs the `security-extended` JavaScript/TypeScript suite on `main` and weekly.
 
 ## Remaining production controls
 

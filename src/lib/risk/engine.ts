@@ -57,7 +57,10 @@ export interface SeverityDisagreement {
   explanation: string;
 }
 
-const clamp = (value: number, min = 0, max = 100): number => Math.min(max, Math.max(min, value));
+const clamp = (value: number, min = 0, max = 100): number => {
+  const finiteValue = Number.isFinite(value) ? value : min;
+  return Math.min(max, Math.max(min, finiteValue));
+};
 
 const safeFinite = (value: number | undefined, fallback = 0): number =>
   value !== undefined && Number.isFinite(value) ? value : fallback;
@@ -85,9 +88,9 @@ function queuePressure(input: RiskAssessmentInput, config: RiskEngineConfig): nu
 }
 
 function evidencePressure(input: RiskAssessmentInput, config: RiskEngineConfig): number {
-  const sourceCount = Math.max(0, Math.floor(input.independentSourceCount));
+  const sourceCount = Math.max(0, Math.floor(safeFinite(input.independentSourceCount)));
   const countScore = clamp((sourceCount / config.thresholds.evidenceSaturationSources) * 100);
-  const reliabilityScore = clamp(input.meanSourceReliability * 100);
+  const reliabilityScore = clamp(safeFinite(input.meanSourceReliability) * 100);
 
   // Independent corroboration is the primary signal; source reliability
   // tempers it so four low-quality duplicates cannot score as strong evidence.

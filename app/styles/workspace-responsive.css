@@ -1,0 +1,479 @@
+@media (max-width: 1360px) {
+  .topbar {
+    grid-template-columns: 240px 1fr auto;
+  }
+  .topbar-brand {
+    padding-inline: 14px;
+  }
+  .feed-badge {
+    display: none;
+  }
+  .supervisor-profile {
+    min-width: 155px;
+  }
+  .supervisor-profile div {
+    display: none;
+  }
+  .kpi-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .kpi-card {
+    min-height: 124px;
+  }
+  .operations-ribbon {
+    grid-template-columns: 0.8fr 1.2fr;
+  }
+  .operations-ribbon .top-action {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--border-soft);
+  }
+  .simulator-grid {
+    grid-template-columns: 220px minmax(500px, 1fr);
+  }
+  .sim-inspector {
+    position: static;
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 260px 1fr 230px;
+  }
+  .sim-inspector .panel-head {
+    border-right: 1px solid var(--border-soft);
+  }
+  .assertion-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .assertion-list article {
+    border-right: 1px solid var(--border-soft);
+    padding: 10px;
+  }
+}
+
+@media (max-width: 1120px) {
+  :root {
+    --sidebar: 64px;
+  }
+  .topbar {
+    grid-template-columns: 220px 1fr auto;
+  }
+  .ai-health {
+    display: none;
+  }
+  .phase-select {
+    display: none;
+  }
+  .workspace-view {
+    padding-inline: 18px;
+  }
+  .command-grid {
+    grid-template-columns: 1fr;
+  }
+  .stadium-panel,
+  .queue-panel {
+    min-height: auto;
+  }
+  .heap-visual {
+    height: auto;
+    max-height: 540px;
+  }
+  .queue-footer {
+    height: 46px;
+  }
+  .operations-ribbon {
+    grid-template-columns: 1fr;
+  }
+  .operations-ribbon article {
+    border-right: 0;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .operations-ribbon .top-action {
+    grid-column: auto;
+    border-top: 0;
+  }
+  .evidence-grid {
+    grid-template-columns: 1fr;
+  }
+  .lab-grid {
+    grid-template-columns: 1fr;
+  }
+  .simulator-grid {
+    grid-template-columns: 1fr;
+  }
+  .scenario-library,
+  .sim-inspector {
+    position: static;
+  }
+  .scenario-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .sim-inspector {
+    display: block;
+    grid-column: auto;
+  }
+  .assertion-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .audit-layout {
+    grid-template-columns: 1fr;
+  }
+  .audit-sidebar {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .audit-integrity-card {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 820px) {
+  :root {
+    --sidebar: 0px;
+    --topbar: 62px;
+  }
+  .sidebar {
+    width: 240px;
+    transform: translateX(-102%);
+    visibility: hidden;
+    pointer-events: none;
+    transition: transform 0.2s ease;
+    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.4);
+  }
+  .sidebar.is-open {
+    transform: translateX(0);
+    visibility: visible;
+    pointer-events: auto;
+  }
+  .mobile-nav-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: block;
+    border: 0;
+    border-radius: 0;
+    background: rgba(2, 8, 15, 0.72);
+  }
+  .sidebar-brand {
+    height: 62px;
+  }
+  .sidebar nav button,
+  .sidebar-bottom > button {
+    min-height: 48px;
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 0 14px;
+    font-size: 10px;
+  }
+  .sidebar nav button.is-active::before {
+    left: -8px;
+  }
+  .profile-nav b {
+    font-size: 9px;
+  }
+  .mobile-menu-button {
+    display: grid;
+    place-items: center;
+  }
+  .topbar {
+    grid-template-columns: 1fr auto;
+  }
+  .topbar-brand {
+    border-right: 0;
+  }
+  .topbar-status {
+    display: none;
+  }
+  .top-action-button:first-of-type {
+    display: none;
+  }
+  .supervisor-profile {
+    min-width: auto;
+    padding: 0 10px;
+  }
+  .supervisor-profile > svg {
+    display: none;
+  }
+  .workspace-view {
+    padding: 18px 12px 26px;
+  }
+  .command-heading,
+  .view-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 11px;
+  }
+  .operational-state {
+    width: 100%;
+    min-width: 0;
+  }
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .map-footer {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .zone-mini-stats {
+    order: 3;
+    flex-basis: 100%;
+  }
+  .zone-mini-stats > div:first-child {
+    border-left: 0;
+  }
+  .detail-tabs {
+    padding: 0;
+    overflow-x: auto;
+  }
+  .detail-tabs button {
+    flex: 1 0 auto;
+    padding-inline: 10px;
+  }
+  .score-strip {
+    flex-wrap: wrap;
+  }
+  .confidence-bars {
+    margin-left: 0;
+  }
+  .response-overview {
+    grid-template-columns: 1fr;
+  }
+  .route-factors {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .decision-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .decision-buttons {
+    margin-left: 0;
+    width: 100%;
+  }
+  .decision-buttons button {
+    flex: 1;
+  }
+  .audit-kpis {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .audit-log-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .audit-filters {
+    width: 100%;
+  }
+  .search-field {
+    flex: 1;
+  }
+  .search-field input {
+    width: 100%;
+  }
+  .global-footer > span:last-child {
+    display: none;
+  }
+  .risk-breakdown > div {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .topbar-brand {
+    padding-inline: 10px;
+  }
+  .topbar-brand small,
+  .edition {
+    display: none;
+  }
+  .wordmark {
+    font-size: 17px;
+  }
+  .notification-button {
+    width: 39px;
+  }
+  .supervisor-profile > span {
+    width: 30px;
+    height: 30px;
+  }
+  .command-heading h1,
+  .view-heading h1 {
+    font-size: 25px;
+  }
+  .kpi-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+  }
+  .kpi-card {
+    min-height: 119px;
+    padding-inline: 10px;
+  }
+  .kpi-value strong {
+    font-size: 23px;
+  }
+  .kpi-card footer span:last-child {
+    display: none;
+  }
+  .operations-ribbon article {
+    padding-inline: 10px;
+  }
+  .stadium-canvas {
+    min-height: 320px;
+  }
+  .stadium-svg {
+    width: 100%;
+    min-width: 0;
+    transform: none;
+  }
+  .map-legend {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 7px;
+  }
+  .map-incident-label {
+    left: 8px;
+    bottom: 8px;
+    max-width: 250px;
+  }
+  .zone-mini-stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 0;
+  }
+  .incident-score-row {
+    gap: 8px;
+  }
+  .detail-header {
+    padding-inline: 13px;
+  }
+  .approval-banner {
+    padding-inline: 12px;
+  }
+  .model-version {
+    display: none;
+  }
+  .tab-content {
+    padding-inline: 12px;
+  }
+  .risk-score-block {
+    min-width: 0;
+  }
+  .score-divider {
+    display: none;
+  }
+  .ai-score-block {
+    flex: 1;
+  }
+  .confidence-bars {
+    width: 100%;
+  }
+  .confidence-bars i {
+    flex: 1;
+    height: 4px;
+  }
+  .uncertainty-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .degraded-analysis-card {
+    grid-template-columns: auto 1fr;
+  }
+  .degraded-mode-tag {
+    grid-column: 2;
+  }
+  .announcement-card {
+    padding: 14px;
+  }
+  .announcement-card p {
+    font-size: 13px;
+  }
+  .announcement-card footer {
+    align-items: center;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .route-summary-grid {
+    grid-template-columns: 1fr;
+  }
+  .route-summary-grid > div {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .route-summary-grid > div:last-child {
+    border-bottom: 0;
+  }
+  .supervisor-note > div {
+    flex-direction: column;
+  }
+  .view-heading-actions {
+    width: 100%;
+  }
+  .view-heading-actions button {
+    flex: 1;
+  }
+  .mapping-row {
+    grid-template-columns: minmax(90px, 1fr) 15px minmax(120px, 1.2fr) 66px;
+  }
+  .confidence-value {
+    margin-left: 5px;
+  }
+  .mapping-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .preview-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .scenario-list {
+    grid-template-columns: 1fr;
+  }
+  .scenario-stage-head {
+    align-items: flex-start;
+  }
+  .scenario-impact {
+    display: none;
+  }
+  .simulation-monitor {
+    padding-inline: 13px;
+  }
+  .sim-controls {
+    flex-wrap: wrap;
+    padding-inline: 13px;
+  }
+  .speed-control {
+    margin-left: 0;
+  }
+  .timeline-section {
+    padding-inline: 13px;
+  }
+  .assertion-list {
+    grid-template-columns: 1fr;
+  }
+  .audit-kpis {
+    grid-template-columns: 1fr 1fr;
+  }
+  .audit-sidebar {
+    grid-template-columns: 1fr;
+  }
+  .audit-integrity-card {
+    grid-column: auto;
+  }
+  .audit-filters {
+    flex-direction: column;
+  }
+  .audit-filters select {
+    width: 100%;
+  }
+  .global-footer {
+    padding: 10px 12px;
+  }
+  .global-footer p {
+    text-align: left;
+  }
+  .toast {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    min-width: 0;
+  }
+  .risk-breakdown > div {
+    grid-template-columns: 1fr;
+  }
+}

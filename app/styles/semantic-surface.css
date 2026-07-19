@@ -1,0 +1,100 @@
+/* Final semantic surface pass: later responsive polish must not reintroduce decorative accents. */
+body {
+  font-family: "IBM Plex Sans", sans-serif;
+  background: linear-gradient(180deg, #071318, #061116 72%, #040d11);
+}
+h1,
+h2,
+h3,
+.wordmark,
+.decision-incident h2,
+.scenario-stage-head h2 {
+  font-family: "Sora Variable", "IBM Plex Sans", sans-serif;
+}
+.mono,
+.event-clock strong,
+.kpi-value,
+.decision-metrics dd,
+.source-id,
+.weight,
+.version-text,
+.audit-table td:first-child,
+.map-status,
+.tiny-label,
+.pitch-label,
+.poi text,
+.gates text,
+.exits text,
+.map-incident-code,
+.eta-line {
+  font-family: "IBM Plex Mono", monospace;
+  font-variant-numeric: tabular-nums;
+}
+.panel,
+.kpi-card,
+.decision-brief,
+.signal-strip,
+.audit-kpis article,
+.audit-integrity-card,
+.simulation-monitor,
+.scenario-list button {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.panel:hover,
+.kpi-card:hover,
+.scenario-list button:hover {
+  transform: none;
+  box-shadow: var(--shadow);
+}
+.topbar {
+  background: rgba(5, 16, 20, 0.96);
+  border-bottom-color: var(--border);
+  box-shadow: none;
+}
+.stadium-panel {
+  border-color: #3b5e62;
+  box-shadow:
+    0 0 0 1px rgba(85, 194, 195, 0.06),
+    0 24px 70px rgba(0, 0, 0, 0.26);
+}
+.scenario-language-sample {
+  margin-top: 12px;
+  border-left-color: var(--green);
+}
+.scenario-language-sample p {
+  font-family: "IBM Plex Sans", sans-serif;
+}
+.scenario-large-number {
+  color: var(--muted);
+}
+.audit-table-wrap:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: -2px;
+}
+.audit-layout > *,
+.audit-log-panel,
+.audit-table-wrap {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 560px) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
+  .audit-kpis article {
+    min-width: 0;
+    align-items: flex-start;
+  }
+  .audit-kpis article > div {
+    min-width: 0;
+    grid-template-columns: 1fr;
+  }
+  .audit-kpis small,
+  .audit-kpis div > span {
+    overflow-wrap: anywhere;
+  }
+}

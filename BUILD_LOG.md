@@ -24,7 +24,7 @@ Detailed verification results are appended before release.
 - Upgraded the public README with a judge path, architecture flow, local setup, security status, production/developer links, and CI badges.
 - Upgraded Next.js and Firebase Admin, removed the experimental vinext/Cloudflare deployment bridge, and refreshed compatible transitive packages; the production audit now has no high or critical advisories.
 - Centralized same-origin enforcement across upload, analysis, fusion, and audit APIs; added regression coverage, a private vulnerability-reporting policy, a high-severity dependency CI gate, and weekly CodeQL `security-extended` analysis.
-- Documented eight moderate upstream transitive advisories and their constrained reach instead of applying npm's unsafe forced framework downgrade.
+- Initially documented eight moderate upstream transitive advisories instead of applying npm's unsafe forced framework downgrade; the final hardening pass later resolved them with compatible patched dependency overrides.
 
 ## 2026-07-19
 
@@ -36,3 +36,4 @@ Detailed verification results are appended before release.
 - Expanded accessibility automation across every primary view at desktop, mobile, and 320 px; added keyboard, skip-link, reduced-motion, increased-contrast, and forced-colours coverage/support.
 - Added deterministic removal of invented evidence/contradiction source IDs before the single bounded model-repair attempt; supplied citations remain unchanged and unsupported claims never enter the operator brief.
 - Final release gate passed after all changes: strict typecheck, lint, 43 unit/integration tests, environment validation, production build, 23 Playwright checks, repository-size enforcement, and no high or critical production dependency advisories.
+- Final quality hardening split the three largest operator components into focused workflows, fixed non-finite risk normalization, exercised the actual Firestore adapter, eliminated all known npm advisories with compatible patched resolutions, raised enforced coverage to 93%/85%/95%/95%, and expanded the release suite to 107 unit/integration plus 27 Playwright checks.

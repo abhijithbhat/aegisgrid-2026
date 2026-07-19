@@ -1,0 +1,238 @@
+/* Response */
+.saved-plan-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 9px 11px;
+  background: #201d17;
+  border: 1px solid rgba(240, 180, 74, 0.3);
+  color: var(--amber);
+  font-size: 8px;
+}
+.saved-plan-warning strong {
+  margin-right: 4px;
+}
+.response-overview {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.team-assignment-card,
+.equipment-card,
+.response-sequence,
+.supervisor-note {
+  padding: 15px;
+  border: 1px solid var(--border-soft);
+  background: #0a1623;
+}
+.team-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 13px 0;
+  padding: 10px;
+  background: var(--surface-2);
+}
+.team-avatar {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  background: var(--cyan-dim);
+  border: 1px solid var(--cyan);
+  color: var(--cyan);
+  font: 900 10px monospace;
+}
+.team-identity > div {
+  display: flex;
+  flex-direction: column;
+}
+.team-identity strong {
+  font-size: 10px;
+}
+.team-identity div span {
+  color: var(--green);
+  font-size: 7px;
+}
+.eta-box {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.eta-box small {
+  color: var(--muted);
+  font-size: 6px;
+}
+.eta-box b {
+  color: var(--cyan);
+  font: 800 12px monospace;
+}
+.field-label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: var(--text-soft);
+  font-size: 8px;
+  font-weight: 750;
+}
+select,
+input,
+textarea {
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  background: #0a1623;
+  color: var(--text);
+}
+select {
+  min-height: 34px;
+  padding: 0 28px 0 9px;
+}
+input {
+  min-height: 34px;
+  padding: 0 9px;
+}
+textarea {
+  padding: 9px;
+  resize: vertical;
+}
+.equipment-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 13px 0;
+}
+.equipment-list span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 7px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+  font-size: 8px;
+}
+.equipment-list svg {
+  color: var(--green);
+}
+.affected-zones {
+  padding-top: 9px;
+  border-top: 1px solid var(--border-soft);
+}
+.affected-zones small {
+  color: var(--muted);
+  font-size: 7px;
+  font-weight: 800;
+}
+.affected-zones p {
+  margin: 3px 0 0;
+  color: var(--text-soft);
+  font-size: 8px;
+}
+.response-sequence {
+  margin-top: 12px;
+}
+.action-sequence {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.action-sequence li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 50px;
+  padding: 7px 5px;
+  border-top: 1px solid var(--border-soft);
+}
+.action-sequence li.is-complete {
+  opacity: 0.62;
+}
+.action-sequence li.is-complete strong {
+  text-decoration: line-through;
+}
+.action-check {
+  width: 27px;
+  height: 27px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-strong);
+  background: #0d1e2d;
+  color: var(--cyan);
+  font: 800 8px monospace;
+}
+.is-complete .action-check {
+  background: var(--green);
+  color: #071711;
+  border-color: var(--green);
+}
+.action-sequence li > div {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.action-sequence strong {
+  font-size: 9px;
+}
+.action-sequence div span {
+  color: var(--muted);
+  font-size: 7px;
+}
+.approval-tag,
+.auto-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 5px;
+  color: var(--amber);
+  border: 1px solid rgba(240, 180, 74, 0.3);
+  font-size: 6px;
+  text-transform: uppercase;
+}
+.auto-tag {
+  color: var(--green);
+  border-color: rgba(79, 214, 162, 0.3);
+}
+.edit-sequence {
+  margin-top: 7px;
+}
+.plan-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 12px;
+}
+.plan-editor label {
+  color: var(--muted);
+  font-size: 8px;
+}
+.plan-editor > div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+}
+.supervisor-note {
+  margin-top: 12px;
+}
+.supervisor-note > label {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 7px;
+}
+.supervisor-note label span {
+  font-size: 9px;
+  font-weight: 800;
+}
+.supervisor-note label small {
+  color: var(--muted);
+  font-size: 7px;
+}
+.supervisor-note > div {
+  display: flex;
+  gap: 7px;
+}
+.supervisor-note input {
+  flex: 1;
+}

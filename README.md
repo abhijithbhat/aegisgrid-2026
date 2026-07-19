@@ -100,14 +100,14 @@ npm run typecheck
 npm run test:coverage
 npm run build
 npm run check:size
-npm audit --omit=dev --audit-level=high
+npm audit --omit=dev --audit-level=moderate
 ```
 
 The complete local gate is `npm run verify`. Browser checks use `npm run test:e2e`; the AI eval harness uses `npm run evals` against `APP_ORIGIN`.
 
-The current release suite contains **84 unit/integration tests and 25 Playwright checks**. CI enforces at least **90% statements, 82% branches, 90% functions, and 90% lines** across the tested domain and server-boundary modules; the verified 2026-07-19 result is 90.08% / 82.75% / 91.51% / 92.47%. Browser tests run hermetically with external persistence disabled and provider responses mocked per test, so a developer's local Gemini key cannot make the result flaky. Tests cover risk boundaries, heap order/complexity behaviour, duplicate blocking, false-duplicate preservation, accessible routing, strict AI contracts, constrained citation repair/fail-safe behavior, prompt injection, malformed/adversarial imports, oversized files, unknown zones, cross-origin writes, security headers, typed APIs, deterministic simulator reset, degraded mode, keyboard navigation, WCAG 2.2 A/AA axe scans, high/forced contrast, reduced motion, semantic landmarks, and 320 px reflow.
+The current release suite contains **107 unit/integration tests and 27 Playwright checks**. CI enforces at least **93% statements, 85% branches, 95% functions, and 95% lines** across the tested domain and server-boundary modules; the verified 2026-07-19 result is 93.54% / 86.47% / 96.87% / 96.04%. Browser tests run hermetically with external persistence disabled and provider responses mocked per test, so a developer's local Gemini key cannot make the result flaky. Tests cover finite risk normalization and exact severity boundaries, Firestore provider/fallback behavior, heap order/complexity behaviour, duplicate blocking, false-duplicate preservation, accessible routing, strict AI contracts, constrained citation repair/fail-safe behavior, prompt injection, malformed/adversarial imports, oversized files, unknown zones, cross-origin writes, security headers, typed APIs, deterministic simulator reset, degraded mode, keyboard navigation, WCAG 2.2 A/AA axe scans, text-spacing overrides, dynamic status semantics, high/forced contrast, reduced motion, semantic landmarks, and 320 px reflow.
 
-Prettier is a required CI gate, TypeScript runs in strict mode, and ESLint uses Next.js core-web-vitals plus TypeScript rules. The global cascade is split into ordered foundation, incident-intelligence, workspace, common-operating-picture, competition-polish, and accessibility/motion modules; application chrome is isolated from domain workflow state. This keeps presentation changes reviewable without moving deterministic safety calculations into React.
+Prettier is a required CI gate, TypeScript runs in strict mode, and ESLint uses Next.js core-web-vitals plus TypeScript rules. CI also enforces reviewable module boundaries (500 lines for interactive component modules and 1,000 for stylesheet modules). The global cascade is split into ordered foundation, chrome, command, incident-intelligence, workspace, common-operating-picture, competition-polish, responsive, semantic, and accessibility/motion modules. Application chrome, command metrics, incident intelligence/response/routing/communication, Data Lab source/mapping/preview, persistence, simulation, and supervisor actions are isolated into focused components or typed hooks. This keeps changes reviewable without moving deterministic safety calculations into React.
 
 ### Current eval status
 
@@ -142,9 +142,7 @@ Security review date: **2026-07-19**.
 - Uploads are allowlisted, capped at 2 MiB, parsed with bounded rows/pages/text, treated as data rather than instructions, and never persisted raw.
 - Firestore rules deny every direct browser read/write. Durable writes are server-side, schema-validated, and actor-stamped.
 - GitHub Actions runs formatting, strict type, lint, enforced coverage, build, size, browser accessibility, and high/critical production dependency gates. CodeQL runs the `security-extended` JavaScript/TypeScript suite on `main` and weekly.
-- The current production audit has **no high or critical advisories** after upgrading Next.js and Firebase Admin and removing the experimental Cloudflare/vinext deployment bridge.
-
-`npm audit` still reports eight **moderate transitive** advisories: Next.js bundles an older PostCSS used only to compile trusted project CSS, and Firebase Admin's storage chain retains `uuid@9` while AegisGrid does not call the affected caller-supplied-buffer UUID APIs. npm's suggested forced fix would incorrectly downgrade core frameworks, so it is intentionally not applied. These residuals are documented rather than hidden and must be rechecked when upstream packages release compatible fixes.
+- A full current `npm audit` reports **zero known vulnerabilities** after upgrading Firebase Admin and pinning compatible patched PostCSS and UUID transitive versions. CI fails on any moderate-or-higher production advisory.
 
 See the [security policy](SECURITY.md) for private reporting and [detailed threat model](docs/security.md) for production limitations.
 
