@@ -98,7 +98,11 @@ function evidencePressure(input: RiskAssessmentInput, config: RiskEngineConfig):
   return clamp(countScore * 0.7 + reliabilityScore * 0.3);
 }
 
-function severityForScore(score: number, config: RiskEngineConfig): Severity {
+/** Maps a deterministic numeric risk score to the configured severity band. */
+export function severityForRiskScore(
+  score: number,
+  config: RiskEngineConfig = DEFAULT_RISK_CONFIG,
+): Severity {
   if (score < config.thresholds.severity.low) return "low";
   if (score < config.thresholds.severity.moderate) return "moderate";
   if (score < config.thresholds.severity.high) return "high";
@@ -155,7 +159,7 @@ export function assessRisk(
 
   return {
     score,
-    severity: severityForScore(score, config),
+    severity: severityForRiskScore(score, config),
     components,
     contributions,
     formula: "risk = Σ(normalized component × configured weight), clamped to 0–100",
@@ -224,4 +228,3 @@ export function explainSeverityDisagreement(
       : `Numeric and AI severity both classify this incident as ${numeric.severity}.`,
   };
 }
-

@@ -55,8 +55,19 @@ export function rejectCrossOriginRequest(request: Request, id: string): Response
   try {
     const originUrl = new URL(origin);
     const requestUrl = new URL(request.url);
-    
+
     if (originUrl.origin === requestUrl.origin) return null;
+
+    // Production deployments should configure APP_ORIGIN. When present it is
+    // the only proxy-facing origin we trust; client-supplied forwarding
+    // headers cannot widen this allowlist.
+    const configuredOrigin = process.env.APP_ORIGIN
+      ? new URL(process.env.APP_ORIGIN).origin
+      : undefined;
+    if (configuredOrigin) {
+      if (originUrl.origin === configuredOrigin) return null;
+      return publicError(id, 403, "ORIGIN_REJECTED", "Cross-origin access is not allowed.");
+    }
 
     const forwardedHost = request.headers.get("x-forwarded-host") || request.headers.get("host");
     if (forwardedHost) {

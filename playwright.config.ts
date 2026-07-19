@@ -17,5 +17,10 @@ export default defineConfig({
     url: "http://localhost:3000/api/health",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    env: {
+      APP_ORIGIN: "http://localhost:3000",
+      ENABLE_FIRESTORE: "false",
+      GEMINI_API_KEY: "",
+    },
   },
 });

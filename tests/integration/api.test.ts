@@ -9,12 +9,15 @@ import { GET as liveUpdates } from "../../app/api/live/route";
 
 const originalKey = process.env.GEMINI_API_KEY;
 const originalFirestore = process.env.ENABLE_FIRESTORE;
+const originalAppOrigin = process.env.APP_ORIGIN;
 
 afterEach(() => {
   if (originalKey === undefined) delete process.env.GEMINI_API_KEY;
   else process.env.GEMINI_API_KEY = originalKey;
   if (originalFirestore === undefined) delete process.env.ENABLE_FIRESTORE;
   else process.env.ENABLE_FIRESTORE = originalFirestore;
+  if (originalAppOrigin === undefined) delete process.env.APP_ORIGIN;
+  else process.env.APP_ORIGIN = originalAppOrigin;
 });
 
 describe("typed API boundaries", () => {
@@ -54,6 +57,7 @@ describe("typed API boundaries", () => {
   });
 
   it("accepts browser writes matching forwarded proxy headers", async () => {
+    delete process.env.APP_ORIGIN;
     const response = await analyze(new Request("http://localhost/api/analyze", {
       method: "POST",
       headers: {
@@ -67,6 +71,33 @@ describe("typed API boundaries", () => {
     const body = await response.json();
     expect(response.status).not.toBe(403);
     expect(body.error?.code).not.toBe("ORIGIN_REJECTED");
+  });
+
+  it("does not let forwarded headers widen a configured production origin", async () => {
+    process.env.APP_ORIGIN = "https://trusted.example";
+    const spoofed = await analyze(new Request("http://container.internal/api/analyze", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        origin: "https://attacker.example",
+        "x-forwarded-host": "attacker.example",
+        "x-forwarded-proto": "https",
+      },
+      body: "{}",
+    }));
+    const rejected = await spoofed.json();
+    expect(spoofed.status).toBe(403);
+    expect(rejected.error.code).toBe("ORIGIN_REJECTED");
+
+    const trusted = await analyze(new Request("http://container.internal/api/analyze", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        origin: "https://trusted.example",
+      },
+      body: "{}",
+    }));
+    expect(trusted.status).not.toBe(403);
   });
 
   it("accepts a canonical file only into the mapping-approval stage", async () => {

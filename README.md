@@ -104,7 +104,7 @@ npm audit --omit=dev --audit-level=high
 
 The complete local gate is `npm run verify`. Browser checks use `npm run test:e2e`; the AI eval harness uses `npm run evals` against `APP_ORIGIN`.
 
-Tests cover risk boundaries, heap order/complexity behaviour, duplicate blocking, false-duplicate preservation, accessible routing, strict AI contracts, repair/fail-safe behavior, malformed/adversarial imports, oversized files, unknown zones, cross-origin writes, typed APIs, and degraded mode.
+The current release suite contains **42 unit/integration tests and 23 Playwright checks**. Browser tests run hermetically with external persistence disabled and provider responses mocked per test, so a developer's local Gemini key cannot make the result flaky. Tests cover risk boundaries, heap order/complexity behaviour, duplicate blocking, false-duplicate preservation, accessible routing, strict AI contracts, repair/fail-safe behavior, prompt injection, malformed/adversarial imports, oversized files, unknown zones, cross-origin writes, security headers, typed APIs, deterministic simulator reset, degraded mode, keyboard navigation, reduced motion, and 320 px reflow with automated axe scans.
 
 ### Current eval status
 
@@ -130,11 +130,11 @@ _Last run: 2026-07-17 · Source: [evals/results.json](evals/results.json)_
 
 ## Security status
 
-Security review date: **2026-07-11**.
+Security review date: **2026-07-19**.
 
 - No credentials, private keys, `.env` files, or known GitHub/Gemini token formats are tracked in the repository history.
 - Production responses set CSP, HSTS, `nosniff`, frame denial, opener isolation, a restrictive permissions policy, and strict referrer handling.
-- Browser API calls are same-origin only; cross-origin requests are rejected before parsing uploads, validating actions, or invoking Gemini.
+- Browser API calls are same-origin only; cross-origin requests are rejected before parsing uploads, validating actions, or invoking Gemini. When `APP_ORIGIN` is configured, untrusted forwarded-host headers cannot widen the production allowlist.
 - Uploads are allowlisted, capped at 2 MiB, parsed with bounded rows/pages/text, treated as data rather than instructions, and never persisted raw.
 - Firestore rules deny every direct browser read/write. Durable writes are server-side, schema-validated, and actor-stamped.
 - GitHub Actions runs type, lint, test, build, size, browser accessibility, and high/critical production dependency gates. CodeQL runs the `security-extended` JavaScript/TypeScript suite on `main` and weekly.

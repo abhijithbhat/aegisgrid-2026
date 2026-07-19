@@ -25,3 +25,13 @@ Detailed verification results are appended before release.
 - Upgraded Next.js and Firebase Admin, removed the experimental vinext/Cloudflare deployment bridge, and refreshed compatible transitive packages; the production audit now has no high or critical advisories.
 - Centralized same-origin enforcement across upload, analysis, fusion, and audit APIs; added regression coverage, a private vulnerability-reporting policy, a high-severity dependency CI gate, and weekly CodeQL `security-extended` analysis.
 - Documented eight moderate upstream transitive advisories and their constrained reach instead of applying npm's unsafe forced framework downgrade.
+
+## 2026-07-19
+
+- Centralized score-to-severity mapping in the deterministic risk engine and extracted the operational adapters and incident-analysis lifecycle from the command-center component.
+- Enabled stricter TypeScript checks for unused code, casing, overrides, and switch fallthrough to catch maintainability regressions during CI.
+- Added an explicit production response-header policy: CSP, HSTS, frame denial, MIME sniffing prevention, opener/resource isolation, referrer restrictions, and a restrictive permissions policy.
+- Hardened the production same-origin boundary so spoofed forwarded-host headers cannot expand a configured `APP_ORIGIN` allowlist.
+- Made browser tests independent of developer credentials, added an adversarial prompt-injection UI path, deterministic simulator reset coverage, and response-header assertions.
+- Expanded accessibility automation across every primary view at desktop, mobile, and 320 px; added keyboard, skip-link, reduced-motion, increased-contrast, and forced-colours coverage/support.
+- Final release gate passed after all changes: strict typecheck, lint, 42 unit/integration tests, environment validation, production build, 23 Playwright checks, repository-size enforcement at 5.81 MiB, and no high or critical production dependency advisories.

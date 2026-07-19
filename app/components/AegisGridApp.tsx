@@ -1,11 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { AIRecommendation, IncidentType, Severity } from "../../src/types";
+import type { AIRecommendation } from "../../src/types";
 import { assessRisk } from "../../src/lib/risk";
 import { rankOperationalItems } from "../../src/lib/incidents";
-import { buildStadiumGraph, calculateResponderRoutes, RouteNotFoundError } from "../../src/lib/routing";
-import { STADIUM_ZONES, ZONE_EDGES } from "../../data/seed/stadium";
 import { AuditView } from "./AuditView";
 import { DataLab, type NormalizedImportRow } from "./DataLab";
 import { Icon, type IconName } from "./Icon";
@@ -13,15 +11,28 @@ import { IncidentDetail } from "./IncidentDetail";
 import { IncidentQueue } from "./IncidentQueue";
 import { ScenarioSimulator } from "./ScenarioSimulator";
 import { StadiumMap } from "./StadiumMap";
-import { INITIAL_AUDIT, INITIAL_INCIDENTS, INITIAL_ZONES, type AuditEvent, type Incident, type Zone } from "./aegisData";
+import { useIncidentAnalysis } from "./use-incident-analysis";
+import { INITIAL_AUDIT, INITIAL_INCIDENTS, INITIAL_ZONES, type AuditEvent, type Incident } from "./aegisData";
+import {
+  AUDIT_ACTION_BY_LABEL,
+  AUDIT_LABEL_BY_ACTION,
+  EVENT_PHASE_LABELS,
+  TEAM_BY_TYPE,
+  UI_ZONE_BY_CANONICAL,
+  auditStatus,
+  domainIncidentType,
+  domainPhase,
+  etaSeconds,
+  formatEta,
+  nowTime,
+  numericSeverity,
+  withDeterministicRisk,
+  withDeterministicRoute,
+  withLiveRecommendation,
+} from "./operational-model";
 
 type View = "command" | "data" | "simulator" | "audit";
-type AiState = "checking" | "available" | "unavailable";
 type AuditPersistence = "checking" | "firestore" | "memory" | "error";
-type IncidentAnalysisState =
-  | { status: "loading"; progress: { stage: string; detail: string }[] }
-  | { status: "available"; recommendation: AIRecommendation }
-  | { status: "unavailable"; reason: string };
 
 const NAV: { id: View; label: string; icon: IconName }[] = [
   { id: "command", label: "Command", icon: "grid" },
@@ -29,238 +40,6 @@ const NAV: { id: View; label: string; icon: IconName }[] = [
   { id: "simulator", label: "Simulator", icon: "play" },
   { id: "audit", label: "Audit", icon: "audit" },
 ];
-
-const PHASES = ["Pre-entry", "Ingress", "Live match", "Halftime", "Egress"];
-const UI_ZONE_BY_CANONICAL: Record<string, string> = {
-  "W-CONC": "west-concourse",
-  "N-CONC": "north-stands",
-  "E-CONC": "east-concourse",
-  "S-CONC": "south-stands",
-  "ACCESS-CORR": "accessible-corridor",
-  TRANSIT: "transit-plaza",
-};
-const DOMAIN_ZONE_BY_UI: Record<string, string> = {
-  "west-concourse": "concourse-west",
-  "north-stands": "concourse-north",
-  "east-concourse": "concourse-east",
-  "south-stands": "concourse-south",
-  "accessible-corridor": "accessible-corridor",
-  "transit-plaza": "transit-plaza",
-};
-const TEAM_START_ZONE: Record<string, string> = {
-  "Medical Alpha": "medical-room",
-  "Medical Bravo": "medical-room",
-  "Fire Safety 1": "service-tunnel",
-  "Security Delta": "security-control",
-  "Accessibility Rover": "gate-south",
-  "Crowd Team North": "security-control",
-  "Facilities 2": "service-tunnel",
-};
-const STADIUM_GRAPH = buildStadiumGraph(STADIUM_ZONES, ZONE_EDGES);
-const ZONE_NAME = new Map(STADIUM_ZONES.map((zone) => [zone.id, zone.shortName]));
-
-const AUDIT_ACTION_BY_LABEL: Record<string, string> = {
-  "Response plan approved": "recommendation-approved",
-  "Response plan modified": "recommendation-modified",
-  "Recommendation dismissed": "recommendation-dismissed",
-  "Response team assigned": "team-assigned",
-  "Response step completed": "step-completed",
-  "Source report dismissed": "report-dismissed",
-  "Supervisor note added": "note-added",
-  "Incident resolved": "incident-resolved",
-};
-const AUDIT_LABEL_BY_ACTION = Object.fromEntries(Object.entries(AUDIT_ACTION_BY_LABEL).map(([label, action]) => [action, label]));
-
-const TEAM_BY_TYPE: Record<AIRecommendation["recommendedTeamType"], string> = {
-  medical: "Medical Alpha",
-  security: "Security Delta",
-  fire: "Fire Safety 1",
-  accessibility: "Accessibility Rover",
-  maintenance: "Facilities 2",
-  crowd_control: "Crowd Team North",
-};
-
-function domainIncidentType(label: string): IncidentType {
-  const normalized = label.toLowerCase();
-  if (normalized.includes("medical")) return "medical";
-  if (normalized.includes("fire")) return "fire";
-  if (normalized.includes("crowd")) return "crowd";
-  if (normalized.includes("security")) return "security";
-  if (normalized.includes("infrastructure")) return "infrastructure";
-  if (normalized.includes("access")) return "accessibility";
-  if (normalized.includes("lost")) return "lost_person";
-  return "other";
-}
-
-function domainPhase(label: string) {
-  return label.toLowerCase().replace(" ", "-") as "pre-entry" | "ingress" | "live-match" | "halftime" | "egress";
-}
-
-function numericSeverity(score: number): Severity {
-  if (score < 30) return "low";
-  if (score < 55) return "moderate";
-  if (score < 75) return "high";
-  return "critical";
-}
-
-function withLiveRecommendation(incident: Incident, recommendation?: AIRecommendation): Incident {
-  if (!recommendation) return incident;
-  const numeric = numericSeverity(incident.risk);
-  const disagrees = numeric !== recommendation.severity;
-  return {
-    ...incident,
-    aiSeverity: recommendation.severity[0].toUpperCase() + recommendation.severity.slice(1),
-    confidence: Math.round(recommendation.confidence * 100),
-    summary: recommendation.summary,
-    rationale: disagrees
-      ? `Numeric risk is ${numeric} at ${incident.risk}. AI severity is ${recommendation.severity} because it interprets the cited unstructured evidence: ${recommendation.summary}`
-      : `Numeric and AI severity both classify this incident as ${numeric}. ${recommendation.summary}`,
-    evidence: recommendation.evidence.map((item) => ({
-      source: item.sourceId,
-      fact: item.fact,
-      weight: item.weight.toFixed(2),
-      kind: incident.evidence.find((source) => source.source === item.sourceId)?.kind ?? "Validated source",
-    })),
-    contradictions: recommendation.contradictions.length,
-    contradictoryEvidence: recommendation.contradictions.map((item) => ({
-      sources: item.sourceIds.join(" · "),
-      description: item.description,
-      impact: item.operationalImpact,
-    })),
-    missing: recommendation.missingInformation,
-    questions: recommendation.clarifyingQuestions,
-    team: TEAM_BY_TYPE[recommendation.recommendedTeamType],
-    equipment: recommendation.equipment,
-    actions: recommendation.recommendedActions.map((action) => ({
-      text: action.action,
-      owner: action.ownerRole,
-      target: action.targetMinutes === 0 ? "Now" : `${action.targetMinutes} min`,
-      approval: action.requiresApproval,
-    })),
-    announcement: recommendation.announcement,
-    uncertainty: recommendation.uncertaintyNote,
-  };
-}
-
-const RISK_LABEL: Record<string, string> = {
-  occupancyPressure: "Occupancy pressure",
-  inflowPressure: "Inflow pressure",
-  queuePressure: "Queue pressure",
-  hazardSeverity: "Hazard severity",
-  independentEvidence: "Independent evidence",
-  sensorUncertainty: "Sensor uncertainty",
-  eventPhase: "Event phase",
-  routeBlockage: "Route blockage",
-  vulnerability: "Vulnerability",
-};
-
-function withDeterministicRisk(incident: Incident, zones: readonly Zone[], phase: string): Incident {
-  const zone = zones.find((item) => item.id === incident.zoneId);
-  const explicitlyBlocked = zone ? /blocked|unavailable|fails|failure/i.test(zone.detail) : false;
-  const reliability = incident.evidence.length
-    ? incident.evidence.reduce((sum, evidence) => sum + (Number(evidence.weight) || 0), 0) / incident.evidence.length
-    : 0;
-  const assessment = assessRisk({
-    telemetry: zone ? {
-      occupancy: Math.round(zone.capacity * zone.occupancy / 100),
-      capacity: zone.capacity,
-      inflowPerMinute: Math.max(0, zone.flow),
-      outflowPerMinute: Math.max(0, -zone.flow),
-      sensorHealth: zone.state === "degraded" ? "degraded" : "healthy",
-      blocked: explicitlyBlocked,
-      eventPhase: domainPhase(phase),
-    } : undefined,
-    eventPhase: domainPhase(phase),
-    hazardSeverity: incident.riskInputs.hazardSeverity,
-    independentSourceCount: incident.evidence.length,
-    meanSourceReliability: reliability,
-    sensorHealth: zone?.state === "degraded" ? "degraded" : "healthy",
-    blockedRoute: explicitlyBlocked,
-    vulnerablePerson: incident.riskInputs.vulnerablePerson,
-  });
-  return {
-    ...incident,
-    risk: assessment.score,
-    code: `RISK · ${assessment.score}`,
-    riskFormula: assessment.formula,
-    riskContributions: assessment.contributions.map((item) => ({
-      label: RISK_LABEL[item.component] ?? item.component,
-      normalized: item.normalizedValue,
-      contribution: item.contribution,
-    })),
-  };
-}
-
-function withDeterministicRoute(incident: Incident, zones: readonly (typeof INITIAL_ZONES)[number][]): Incident {
-  const fromZoneId = TEAM_START_ZONE[incident.team];
-  const toZoneId = DOMAIN_ZONE_BY_UI[incident.zoneId];
-  if (!fromZoneId || !toZoneId) return incident;
-  const zoneCongestion = Object.fromEntries(zones.flatMap((zone) => {
-    const domainId = DOMAIN_ZONE_BY_UI[zone.id];
-    return domainId ? [[domainId, zone.occupancy / 100]] : [];
-  }));
-  const blockedZoneIds = zones.flatMap((zone) => {
-    const domainId = DOMAIN_ZONE_BY_UI[zone.id];
-    const explicitlyBlocked = /blocked|unavailable|fails|failure/i.test(zone.detail);
-    return domainId && explicitlyBlocked ? [domainId] : [];
-  });
-  try {
-    const route = calculateResponderRoutes(STADIUM_GRAPH, {
-      fromZoneId,
-      toZoneId,
-      algorithm: "a-star",
-      accessibilityRequired: incident.team.startsWith("Medical") || incident.team.startsWith("Accessibility"),
-      zoneCongestion,
-      zoneHazards: { [toZoneId]: incident.risk },
-      blockedZoneIds,
-    });
-    const namePath = (path: readonly string[]) => path.map((zoneId) => ZONE_NAME.get(zoneId) ?? zoneId);
-    return {
-      ...incident,
-      eta: `${Math.floor(route.primary.travelSeconds / 60)}m ${Math.round(route.primary.travelSeconds % 60)}s`,
-      route: {
-        from: ZONE_NAME.get(fromZoneId) ?? fromZoneId,
-        path: namePath(route.primary.zoneIds),
-        alternate: route.alternate ? namePath(route.alternate.zoneIds) : [],
-        eta: `${Math.floor(route.primary.travelSeconds / 60)}m ${Math.round(route.primary.travelSeconds % 60)}s`,
-        alternateEta: route.alternate ? `${Math.floor(route.alternate.travelSeconds / 60)}m ${Math.round(route.alternate.travelSeconds % 60)}s` : "Unavailable",
-        avoided: namePath(route.avoidedZoneIds),
-        saved: `${route.timeSavedSeconds}s`,
-        rationale: route.rationale.join(" "),
-      },
-    };
-  } catch (error) {
-    if (!(error instanceof RouteNotFoundError)) throw error;
-    return { ...incident, eta: "No route", route: { ...incident.route, eta: "No safe route", alternateEta: "Unavailable", path: [], alternate: [], rationale: "No route satisfies the current deterministic closures and accessibility constraints." } };
-  }
-}
-
-function nowTime() {
-  return new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).format(new Date());
-}
-
-function etaSeconds(value: string): number | undefined {
-  const match = value.match(/(?:(\d+)m)?\s*(?:(\d+)s)?/i);
-  if (!match || (!match[1] && !match[2])) return undefined;
-  return Number(match[1] ?? 0) * 60 + Number(match[2] ?? 0);
-}
-
-function formatEta(seconds: number | undefined): string {
-  if (seconds === undefined) return "—";
-  return `${Math.floor(seconds / 60)}:${String(Math.round(seconds % 60)).padStart(2, "0")}`;
-}
-
-function auditStatus(value: string): string {
-  const normalized: Record<string, string> = {
-    "Awaiting approval": "awaiting-approval",
-    "Plan approved": "approved",
-    Monitoring: "monitoring",
-    Resolved: "resolved",
-    Dismissed: "dismissed",
-    "—": "unchanged",
-  };
-  return normalized[value] ?? "unchanged";
-}
 
 export function AegisGridApp() {
   const [interactiveReady, setInteractiveReady] = useState(false);
@@ -274,10 +53,6 @@ export function AegisGridApp() {
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>(INITIAL_AUDIT);
   const [auditPersistence, setAuditPersistence] = useState<AuditPersistence>("checking");
   const [toast, setToast] = useState("");
-  const [aiState, setAiState] = useState<AiState>("checking");
-  const [analysisByIncident, setAnalysisByIncident] = useState<Record<string, IncidentAnalysisState>>({});
-  const analysisStateRef = useRef(analysisByIncident);
-  const validatedAnalysisRequestByIncident = useRef(new Map<string, string>());
   const sidebarRef = useRef<HTMLElement>(null);
   const firstNavRef = useRef<HTMLButtonElement>(null);
   const mobileMenuRef = useRef<HTMLButtonElement>(null);
@@ -286,10 +61,6 @@ export function AegisGridApp() {
   const previousCriticalIds = useRef<string[]>([]);
   const [newCriticalIncident, setNewCriticalIncident] = useState<{ id: string; zoneId: string } | null>(null);
   const isInitialMount = useRef(true);
-
-  useEffect(() => {
-    analysisStateRef.current = analysisByIncident;
-  }, [analysisByIncident]);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => setInteractiveReady(true));
@@ -367,95 +138,8 @@ export function AegisGridApp() {
       rationale: selectedIncident.route.rationale,
     },
   });
-
-  useEffect(() => {
-    if (aiState !== "available") return;
-    const requestPayload = JSON.parse(analysisRequestBody) as { incidentId: string };
-    const incidentId = requestPayload.incidentId;
-    const previousValidatedRequest = validatedAnalysisRequestByIncident.current.get(incidentId);
-    if (previousValidatedRequest === analysisRequestBody) return;
-    if (!previousValidatedRequest && analysisStateRef.current[incidentId]?.status === "available") {
-      // Direct reports already carry a contract-validated recommendation.
-      validatedAnalysisRequestByIncident.current.set(incidentId, analysisRequestBody);
-      return;
-    }
-    const controller = new AbortController();
-    void Promise.resolve().then(() => {
-      if (!controller.signal.aborted) {
-        setAnalysisByIncident((current) => ({ ...current, [incidentId]: { status: "loading", progress: [] } }));
-      }
-      return fetch("/api/analyze", {
-      method: "POST",
-      headers: { "content-type": "application/json", accept: "text/event-stream" },
-      signal: controller.signal,
-      body: analysisRequestBody,
-      });
-    })
-      .then(async (response) => {
-        if (!response.ok || !response.body) throw new Error("Analysis request failed.");
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
-        let body: {
-          outcome?: { status: "available"; recommendation: AIRecommendation } | { status: "degraded"; reason?: string; error?: { message?: string } };
-          error?: { message?: string };
-        } | undefined;
-        while (true) {
-          const { value, done } = await reader.read();
-          buffer += decoder.decode(value, { stream: !done });
-          const frames = buffer.split("\n\n");
-          buffer = frames.pop() ?? "";
-          for (const frame of frames) {
-            const event = frame.match(/^event: (.+)$/m)?.[1];
-            const data = frame.match(/^data: (.+)$/m)?.[1];
-            if (!event || !data) continue;
-            const parsed = JSON.parse(data) as Record<string, unknown>;
-            if (event === "reasoning") {
-              const stage = typeof parsed.stage === "string" ? parsed.stage : "Reasoning update";
-              const detail = typeof parsed.detail === "string" ? parsed.detail : "";
-              setAnalysisByIncident((current) => {
-                const active = current[incidentId];
-                return active?.status === "loading" ? { ...current, [incidentId]: { ...active, progress: [...active.progress, { stage, detail }] } } : current;
-              });
-            }
-            if (event === "result") body = parsed as typeof body;
-          }
-          if (done) break;
-        }
-        if (!body) throw new Error("Analysis stream ended before a validated result.");
-        const outcome = body.outcome;
-        if (!outcome) throw new Error(body.error?.message ?? "Analysis request failed.");
-        if (outcome.status === "available") {
-          validatedAnalysisRequestByIncident.current.set(incidentId, analysisRequestBody);
-          setAnalysisByIncident((current) => ({ ...current, [incidentId]: { status: "available", recommendation: outcome.recommendation } }));
-        } else {
-          setAnalysisByIncident((current) => ({ ...current, [incidentId]: { status: "unavailable", reason: outcome.error?.message ?? outcome.reason ?? "Provider unavailable" } }));
-        }
-      })
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return;
-        setAnalysisByIncident((current) => ({ ...current, [incidentId]: { status: "unavailable", reason: error instanceof Error ? error.message : "Analysis request failed." } }));
-      });
-    return () => {
-      controller.abort();
-    };
-  }, [aiState, analysisRequestBody]);
-
-  useEffect(() => {
-    let active = true;
-    fetch("/api/health", { cache: "no-store" })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("health unavailable");
-        const data = await response.json() as Record<string, unknown>;
-        const ai = data.ai as Record<string, unknown> | undefined;
-        const services = data.services as Record<string, Record<string, unknown>> | undefined;
-        const rawStatus = String(ai?.status ?? services?.ai?.status ?? data.aiStatus ?? "").toLowerCase();
-        const available = data.aiAvailable === true || ai?.available === true || ["ok", "ready", "available", "configured", "connected"].includes(rawStatus);
-        if (active) setAiState(available ? "available" : "unavailable");
-      })
-      .catch(() => { if (active) setAiState("unavailable"); });
-    return () => { active = false; };
-  }, []);
+  const { aiState, analysisByIncident, setAnalysisByIncident } =
+    useIncidentAnalysis(analysisRequestBody);
 
   useEffect(() => {
     if (!toast) return;
@@ -495,13 +179,16 @@ export function AegisGridApp() {
     () => withDeterministicRoute(withLiveRecommendation(selectedIncident, selectedAnalysis?.status === "available" ? selectedAnalysis.recommendation : undefined), zones),
     [selectedIncident, selectedAnalysis, zones],
   );
-  const detailAiStatus: "checking" | "loading" | "available" | "unavailable" = aiState === "checking"
-    ? "checking"
-    : aiState === "unavailable" || selectedAnalysis?.status === "unavailable"
-      ? "unavailable"
-      : selectedAnalysis?.status === "available"
-        ? "available"
-        : "loading";
+  const detailAiStatus: "checking" | "loading" | "available" | "unavailable" =
+    selectedAnalysis?.status === "available"
+      ? "available"
+      : selectedAnalysis?.status === "loading"
+        ? "loading"
+        : selectedAnalysis?.status === "unavailable" || aiState === "unavailable"
+          ? "unavailable"
+          : aiState === "checking"
+            ? "checking"
+            : "loading";
 
   const activeIncidents = useMemo(() => rankOperationalItems(
     routedIncidents.filter((incident) => !["Resolved", "Dismissed"].includes(incident.status)),
@@ -720,7 +407,7 @@ export function AegisGridApp() {
       };
     }));
     const latestPhase = String(normalizedRows[normalizedRows.length - 1]?.event_phase ?? "");
-    const phaseLabel = PHASES.find((item) => domainPhase(item) === latestPhase);
+    const phaseLabel = EVENT_PHASE_LABELS.find((item) => domainPhase(item) === latestPhase);
     if (phaseLabel) setPhase(phaseLabel);
   };
 
@@ -890,7 +577,7 @@ export function AegisGridApp() {
             <div className="event-clock"><span>{clock ? clock.toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short" }).toUpperCase() : "LOCAL TIME"}</span><strong>{clock ? clock.toLocaleTimeString("en-GB", { hour12: false }) : "--:--:--"}</strong><small>IST</small></div>
           </div>
           <div className="topbar-actions">
-            <label className="phase-select"><span>EVENT PHASE</span><select value={phase} onChange={(event) => setPhase(event.target.value)}>{PHASES.map((item) => <option key={item}>{item}</option>)}</select></label>
+            <label className="phase-select"><span>EVENT PHASE</span><select value={phase} onChange={(event) => setPhase(event.target.value)}>{EVENT_PHASE_LABELS.map((item) => <option key={item}>{item}</option>)}</select></label>
             <button type="button" className="top-action-button notification-button" aria-label={`Review ${activeIncidents.length} active incidents`} onClick={() => { selectIncident(topIncident); document.getElementById("incident-queue")?.scrollIntoView({ behavior: "smooth" }); }}><Icon name="bell" /><span>{activeIncidents.length}</span></button>
             <div className="supervisor-profile" aria-label="Signed in as Safety Supervisor"><span>SS</span><div><strong>Safety Supervisor</strong><small>Unity Stadium · Command 01</small></div></div>
           </div>

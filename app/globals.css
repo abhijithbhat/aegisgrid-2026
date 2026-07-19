@@ -2370,12 +2370,6 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .active-route,
-  .incident-marker circle,
-  .reasoning-stream li { animation: none !important; }
-}
-
-@media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
@@ -3719,13 +3713,19 @@ h1, h2, h3, .wordmark, .decision-incident h2, .scenario-stage-head h2 { font-fam
 
 /* Reduced Motion Override Gate */
 @media (prefers-reduced-motion: reduce) {
+  .active-route,
+  .incident-marker circle,
+  .reasoning-stream li,
   .is-new-critical {
-    animation: card-flash-reduced 400ms ease-in-out !important;
+    animation: none !important;
+  }
+
+  .is-new-critical {
     transform: none !important;
   }
   
   .incident-marker-flash circle {
-    animation: marker-flash-reduced 400ms ease-in-out !important;
+    animation: none !important;
   }
   
   .pulse-ring {
@@ -3741,20 +3741,50 @@ h1, h2, h3, .wordmark, .decision-incident h2, .scenario-stage-head h2 { font-fam
   }
 }
 
-@keyframes card-flash-reduced {
-  0%, 100% {
-    background: #101d2c;
+@media (prefers-contrast: more) {
+  :root {
+    --muted: #c7d4d2;
+    --border: #668087;
+    --border-soft: #506a70;
+    --border-strong: #8ba2a7;
   }
-  50% {
-    background: #3e2226;
+
+  button,
+  input,
+  select,
+  textarea,
+  .panel {
+    border-width: 2px;
   }
 }
 
-@keyframes marker-flash-reduced {
-  0%, 100% {
-    fill: var(--red);
+@media (forced-colors: active) {
+  button,
+  input,
+  select,
+  textarea,
+  [role="button"],
+  .panel {
+    border: 1px solid ButtonText;
   }
-  50% {
-    fill: #ffffff;
+
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [role="button"]:focus-visible,
+  a:focus-visible {
+    outline: 3px solid Highlight;
+  }
+
+  .status-label,
+  .severity-badge,
+  .mapping-status,
+  .approval-tag,
+  .degraded-mode-tag {
+    forced-color-adjust: none;
+    background: Canvas;
+    color: CanvasText;
+    border: 1px solid CanvasText;
   }
 }
