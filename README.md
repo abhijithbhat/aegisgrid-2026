@@ -40,14 +40,14 @@ For an offline or no-key review, leave `GEMINI_API_KEY` empty. The honest degrad
 
 ## Hybrid AI architecture
 
-| Deterministic code owns | Gemini owns |
-|---|---|
-| Numeric validation and normalization | Interpreting unstructured incident reports |
-| 0–100 risk arithmetic and factor breakdown | Comparing plausible cross-language duplicates |
-| Binary-heap ordering | Synthesizing contradictions and uncertainty |
-| Graph routing and dynamic edge costs | Proposing unfamiliar-schema mappings |
+| Deterministic code owns                           | Gemini owns                                        |
+| ------------------------------------------------- | -------------------------------------------------- |
+| Numeric validation and normalization              | Interpreting unstructured incident reports         |
+| 0–100 risk arithmetic and factor breakdown        | Comparing plausible cross-language duplicates      |
+| Binary-heap ordering                              | Synthesizing contradictions and uncertainty        |
+| Graph routing and dynamic edge costs              | Proposing unfamiliar-schema mappings               |
 | File limits, server-set audit actors, persistence | Drafting audience- and urgency-aware announcements |
-| Runtime schema validation and source-ID checks | Producing minimum high-value clarifying questions |
+| Runtime schema validation and source-ID checks    | Producing minimum high-value clarifying questions  |
 
 ```mermaid
 flowchart LR
@@ -82,21 +82,22 @@ Open `http://localhost:3000`. A Gemini key is optional for deterministic and sce
 
 ### Environment
 
-| Variable | Purpose |
-|---|---|
-| `GEMINI_API_KEY` | Server-only Gemini API credential |
-| `GEMINI_MODEL` | Provider model, default `gemini-3.1-flash-lite` |
-| `AI_TIMEOUT_MS` | Per-request provider deadline (bounded in code) |
-| `AI_MAX_RETRIES` | Transient retries; maximum one retry |
-| `ENABLE_FIRESTORE` | Enables durable server-side incidents/audit persistence |
+| Variable              | Purpose                                                         |
+| --------------------- | --------------------------------------------------------------- |
+| `GEMINI_API_KEY`      | Server-only Gemini API credential                               |
+| `GEMINI_MODEL`        | Provider model, default `gemini-3.1-flash-lite`                 |
+| `AI_TIMEOUT_MS`       | Per-request provider deadline (bounded in code)                 |
+| `AI_MAX_RETRIES`      | Transient retries; maximum one retry                            |
+| `ENABLE_FIRESTORE`    | Enables durable server-side incidents/audit persistence         |
 | `FIREBASE_PROJECT_ID` | Firestore project when Application Default Credentials are used |
-| `APP_ORIGIN` | Absolute production origin and script target |
+| `APP_ORIGIN`          | Absolute production origin and script target                    |
 
 ## Verify
 
 ```bash
+npm run format:check
 npm run typecheck
-npm test
+npm run test:coverage
 npm run build
 npm run check:size
 npm audit --omit=dev --audit-level=high
@@ -104,17 +105,20 @@ npm audit --omit=dev --audit-level=high
 
 The complete local gate is `npm run verify`. Browser checks use `npm run test:e2e`; the AI eval harness uses `npm run evals` against `APP_ORIGIN`.
 
-The current release suite contains **43 unit/integration tests and 23 Playwright checks**. Browser tests run hermetically with external persistence disabled and provider responses mocked per test, so a developer's local Gemini key cannot make the result flaky. Tests cover risk boundaries, heap order/complexity behaviour, duplicate blocking, false-duplicate preservation, accessible routing, strict AI contracts, constrained citation repair/fail-safe behavior, prompt injection, malformed/adversarial imports, oversized files, unknown zones, cross-origin writes, security headers, typed APIs, deterministic simulator reset, degraded mode, keyboard navigation, reduced motion, and 320 px reflow with automated axe scans.
+The current release suite contains **84 unit/integration tests and 25 Playwright checks**. CI enforces at least **90% statements, 82% branches, 90% functions, and 90% lines** across the tested domain and server-boundary modules; the verified 2026-07-19 result is 90.08% / 82.75% / 91.51% / 92.47%. Browser tests run hermetically with external persistence disabled and provider responses mocked per test, so a developer's local Gemini key cannot make the result flaky. Tests cover risk boundaries, heap order/complexity behaviour, duplicate blocking, false-duplicate preservation, accessible routing, strict AI contracts, constrained citation repair/fail-safe behavior, prompt injection, malformed/adversarial imports, oversized files, unknown zones, cross-origin writes, security headers, typed APIs, deterministic simulator reset, degraded mode, keyboard navigation, WCAG 2.2 A/AA axe scans, high/forced contrast, reduced motion, semantic landmarks, and 320 px reflow.
+
+Prettier is a required CI gate, TypeScript runs in strict mode, and ESLint uses Next.js core-web-vitals plus TypeScript rules. The global cascade is split into ordered foundation, incident-intelligence, workspace, common-operating-picture, competition-polish, and accessibility/motion modules; application chrome is isolated from domain workflow state. This keeps presentation changes reviewable without moving deterministic safety calculations into React.
 
 ### Current eval status
 
 <!-- eval-results:start -->
-| Eval case | Result | HTTP | Mode |
-|---|---:|---:|---|
-| medical-multilingual-01 | Pass | 200 | degraded |
-| smoke-contradiction-01 | Pass | 200 | degraded |
-| false-duplicate-01 | Pass | 200 | hybrid |
-| prompt-injection-schema-01 | Pass | 200 | hybrid |
+
+| Eval case                  | Result | HTTP | Mode     |
+| -------------------------- | -----: | ---: | -------- |
+| medical-multilingual-01    |   Pass |  200 | degraded |
+| smoke-contradiction-01     |   Pass |  200 | degraded |
+| false-duplicate-01         |   Pass |  200 | hybrid   |
+| prompt-injection-schema-01 |   Pass |  200 | hybrid   |
 
 _Last run: 2026-07-17 · Source: [evals/results.json](evals/results.json)_
 <!-- eval-results:end -->
@@ -137,7 +141,7 @@ Security review date: **2026-07-19**.
 - Browser API calls are same-origin only; cross-origin requests are rejected before parsing uploads, validating actions, or invoking Gemini. When `APP_ORIGIN` is configured, untrusted forwarded-host headers cannot widen the production allowlist.
 - Uploads are allowlisted, capped at 2 MiB, parsed with bounded rows/pages/text, treated as data rather than instructions, and never persisted raw.
 - Firestore rules deny every direct browser read/write. Durable writes are server-side, schema-validated, and actor-stamped.
-- GitHub Actions runs type, lint, test, build, size, browser accessibility, and high/critical production dependency gates. CodeQL runs the `security-extended` JavaScript/TypeScript suite on `main` and weekly.
+- GitHub Actions runs formatting, strict type, lint, enforced coverage, build, size, browser accessibility, and high/critical production dependency gates. CodeQL runs the `security-extended` JavaScript/TypeScript suite on `main` and weekly.
 - The current production audit has **no high or critical advisories** after upgrading Next.js and Firebase Admin and removing the experimental Cloudflare/vinext deployment bridge.
 
 `npm audit` still reports eight **moderate transitive** advisories: Next.js bundles an older PostCSS used only to compile trusted project CSS, and Firebase Admin's storage chain retains `uuid@9` while AegisGrid does not call the affected caller-supplied-buffer UUID APIs. npm's suggested forced fix would incorrectly downgrade core frameworks, so it is intentionally not applied. These residuals are documented rather than hidden and must be rechecked when upstream packages release compatible fixes.

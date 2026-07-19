@@ -27,15 +27,10 @@ const CANONICAL_KEYS = new Set([
   "event_phase",
 ]);
 
-const PHASES = new Set<EventPhase>([
-  "pre-entry",
-  "ingress",
-  "live-match",
-  "halftime",
-  "egress",
-]);
+const PHASES = new Set<EventPhase>(["pre-entry", "ingress", "live-match", "halftime", "egress"]);
 const SENSOR_HEALTH = new Set<SensorHealth>(["healthy", "degraded", "offline"]);
-const ISO_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:\d{2})$/;
+const ISO_TIMESTAMP =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:\d{2})$/;
 
 export interface TelemetryValidationContext {
   knownZoneIds: ReadonlySet<string>;
@@ -127,7 +122,12 @@ function validateRow(
 
   const timestamp = typeof raw.timestamp === "string" ? raw.timestamp.trim() : "";
   if (!timestamp) {
-    issues.push({ row, field: "timestamp", code: "missing_required", message: "timestamp is required." });
+    issues.push({
+      row,
+      field: "timestamp",
+      code: "missing_required",
+      message: "timestamp is required.",
+    });
   } else if (!ISO_TIMESTAMP.test(timestamp) || !Number.isFinite(Date.parse(timestamp))) {
     issues.push({
       row,
@@ -140,7 +140,12 @@ function validateRow(
   const inputZoneId = typeof raw.zone_id === "string" ? raw.zone_id.trim() : "";
   const zoneId = context.zoneIdMap?.[inputZoneId] ?? inputZoneId;
   if (!inputZoneId) {
-    issues.push({ row, field: "zone_id", code: "missing_required", message: "zone_id is required." });
+    issues.push({
+      row,
+      field: "zone_id",
+      code: "missing_required",
+      message: "zone_id is required.",
+    });
   } else if (!context.knownZoneIds.has(zoneId)) {
     issues.push({
       row,
@@ -150,7 +155,10 @@ function validateRow(
     });
   }
 
-  const occupancy = parseNumber(raw.occupancy, "occupancy", row, issues, { min: 0, max: 1_000_000 });
+  const occupancy = parseNumber(raw.occupancy, "occupancy", row, issues, {
+    min: 0,
+    max: 1_000_000,
+  });
   const capacity = parseNumber(raw.capacity, "capacity", row, issues, { min: 1, max: 1_000_000 });
   if (occupancy !== undefined && capacity === undefined && !valuePresent(raw.capacity)) {
     issues.push({
@@ -171,9 +179,18 @@ function validateRow(
     min: 0,
     max: 100_000,
   });
-  const queueMinutes = parseNumber(raw.queue_minutes, "queue_minutes", row, issues, { min: 0, max: 1_440 });
-  const temperatureC = parseNumber(raw.temperature_c, "temperature_c", row, issues, { min: -60, max: 100 });
-  const airQualityIndex = parseNumber(raw.air_quality_index, "air_quality_index", row, issues, { min: 0, max: 1_000 });
+  const queueMinutes = parseNumber(raw.queue_minutes, "queue_minutes", row, issues, {
+    min: 0,
+    max: 1_440,
+  });
+  const temperatureC = parseNumber(raw.temperature_c, "temperature_c", row, issues, {
+    min: -60,
+    max: 100,
+  });
+  const airQualityIndex = parseNumber(raw.air_quality_index, "air_quality_index", row, issues, {
+    min: 0,
+    max: 1_000,
+  });
   const noiseDb = parseNumber(raw.noise_db, "noise_db", row, issues, { min: 0, max: 220 });
 
   const sensorHealth =
@@ -292,7 +309,11 @@ export function parseTelemetryJson(
     const parsed = JSON.parse(text) as unknown;
     let rows: unknown;
     if (Array.isArray(parsed)) rows = parsed;
-    else if (isRecord(parsed) && Object.keys(parsed).length === 1 && Array.isArray(parsed.readings)) {
+    else if (
+      isRecord(parsed) &&
+      Object.keys(parsed).length === 1 &&
+      Array.isArray(parsed.readings)
+    ) {
       rows = parsed.readings;
     } else throw new Error("JSON must be an array or an object containing only a readings array.");
     return validateTelemetryRows(rows as unknown[], context);
@@ -303,7 +324,10 @@ export function parseTelemetryJson(
       issues: [
         {
           code: "malformed_file",
-          message: error instanceof Error ? sanitizePlainText(error.message, 300) : "JSON could not be parsed.",
+          message:
+            error instanceof Error
+              ? sanitizePlainText(error.message, 300)
+              : "JSON could not be parsed.",
         },
       ],
       warnings: [],
@@ -325,7 +349,8 @@ export function validateDirectReport(
 ): { valid: true; value: DirectReportInput } | { valid: false; issues: ImportIssue[] } {
   const issues: ImportIssue[] = [];
   const text = typeof input.text === "string" ? sanitizePlainText(input.text, 10_000) : "";
-  if (!text) issues.push({ field: "text", code: "missing_required", message: "Report text is required." });
+  if (!text)
+    issues.push({ field: "text", code: "missing_required", message: "Report text is required." });
   if (input.zoneId && !knownZoneIds.has(input.zoneId)) {
     issues.push({ field: "zoneId", code: "unknown_zone", message: "Unknown report zone." });
   }
@@ -355,4 +380,3 @@ export function serializeValidationReport(result: DataImportResult): string {
     2,
   );
 }
-

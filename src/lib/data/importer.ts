@@ -85,14 +85,19 @@ function fileExtension(name: string): string {
 }
 
 function verifyFile(file: File): string {
-  if (file.size === 0) throw new ImportValidationError("EMPTY_FILE", "The selected file is empty.", 400);
+  if (file.size === 0)
+    throw new ImportValidationError("EMPTY_FILE", "The selected file is empty.", 400);
   if (file.size > MAX_UPLOAD_BYTES) {
     throw new ImportValidationError("FILE_TOO_LARGE", "Files must be 2 MiB or smaller.", 413);
   }
   const extension = fileExtension(file.name);
   const allowedMimeTypes = MIME_BY_EXTENSION[extension];
   if (!allowedMimeTypes || !allowedMimeTypes.includes(file.type)) {
-    throw new ImportValidationError("UNSUPPORTED_MEDIA_TYPE", "Upload a CSV, JSON, text-based PDF, or plain-text report.", 415);
+    throw new ImportValidationError(
+      "UNSUPPORTED_MEDIA_TYPE",
+      "Upload a CSV, JSON, text-based PDF, or plain-text report.",
+      415,
+    );
   }
   return extension;
 }
@@ -101,7 +106,11 @@ function decodeUtf8(bytes: Uint8Array): string {
   try {
     return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   } catch {
-    throw new ImportValidationError("INVALID_TEXT_ENCODING", "CSV, JSON, and text uploads must use valid UTF-8 encoding.", 400);
+    throw new ImportValidationError(
+      "INVALID_TEXT_ENCODING",
+      "CSV, JSON, and text uploads must use valid UTF-8 encoding.",
+      400,
+    );
   }
 }
 
@@ -131,24 +140,46 @@ function parseCsv(text: string): { headers: string[]; rows: ImportRow[] } {
     } else cell += character;
 
     if (cell.length > MAX_CELL_LENGTH) {
-      throw new ImportValidationError("CELL_TOO_LONG", `A cell exceeds the ${MAX_CELL_LENGTH}-character limit.`);
+      throw new ImportValidationError(
+        "CELL_TOO_LONG",
+        `A cell exceeds the ${MAX_CELL_LENGTH}-character limit.`,
+      );
     }
   }
-  if (quoted) throw new ImportValidationError("MALFORMED_CSV", "The CSV contains an unclosed quoted value.");
+  if (quoted)
+    throw new ImportValidationError("MALFORMED_CSV", "The CSV contains an unclosed quoted value.");
   record.push(cell.trim().replace(/\r$/, ""));
   if (record.some(Boolean)) records.push(record);
-  if (records.length < 2) throw new ImportValidationError("NO_DATA_ROWS", "The CSV must contain a header and at least one data row.");
-  if (records.length - 1 > MAX_ROWS) throw new ImportValidationError("TOO_MANY_ROWS", `Imports are limited to ${MAX_ROWS} rows.`);
+  if (records.length < 2)
+    throw new ImportValidationError(
+      "NO_DATA_ROWS",
+      "The CSV must contain a header and at least one data row.",
+    );
+  if (records.length - 1 > MAX_ROWS)
+    throw new ImportValidationError("TOO_MANY_ROWS", `Imports are limited to ${MAX_ROWS} rows.`);
 
   const headers = records[0].map((header) => header.trim());
-  if (headers.some((header) => !header)) throw new ImportValidationError("EMPTY_HEADER", "Every CSV column needs a heading.");
-  if (headers.some((header) => header.length > 200)) throw new ImportValidationError("HEADER_TOO_LONG", "CSV headings are limited to 200 characters.");
-  if (headers.length > MAX_COLUMNS) throw new ImportValidationError("TOO_MANY_COLUMNS", `Imports are limited to ${MAX_COLUMNS} columns.`);
-  if (new Set(headers).size !== headers.length) throw new ImportValidationError("DUPLICATE_HEADER", "CSV headings must be unique.");
+  if (headers.some((header) => !header))
+    throw new ImportValidationError("EMPTY_HEADER", "Every CSV column needs a heading.");
+  if (headers.some((header) => header.length > 200))
+    throw new ImportValidationError(
+      "HEADER_TOO_LONG",
+      "CSV headings are limited to 200 characters.",
+    );
+  if (headers.length > MAX_COLUMNS)
+    throw new ImportValidationError(
+      "TOO_MANY_COLUMNS",
+      `Imports are limited to ${MAX_COLUMNS} columns.`,
+    );
+  if (new Set(headers).size !== headers.length)
+    throw new ImportValidationError("DUPLICATE_HEADER", "CSV headings must be unique.");
 
   const rows = records.slice(1).map((values, rowIndex) => {
     if (values.length !== headers.length) {
-      throw new ImportValidationError("COLUMN_COUNT_MISMATCH", `Row ${rowIndex + 2} has ${values.length} values; expected ${headers.length}.`);
+      throw new ImportValidationError(
+        "COLUMN_COUNT_MISMATCH",
+        `Row ${rowIndex + 2} has ${values.length} values; expected ${headers.length}.`,
+      );
     }
     return Object.fromEntries(headers.map((header, index) => [header, values[index]]));
   });
@@ -163,25 +194,49 @@ function parseJson(text: string): { headers: string[]; rows: ImportRow[] } {
     throw new ImportValidationError("MALFORMED_JSON", "The JSON file could not be parsed.", 400);
   }
   const records = Array.isArray(value) ? value : [value];
-  if (!records.length || records.length > MAX_ROWS) throw new ImportValidationError("INVALID_JSON_ROWS", `JSON must contain 1–${MAX_ROWS} records.`);
+  if (!records.length || records.length > MAX_ROWS)
+    throw new ImportValidationError(
+      "INVALID_JSON_ROWS",
+      `JSON must contain 1–${MAX_ROWS} records.`,
+    );
   if (records.some((record) => !record || typeof record !== "object" || Array.isArray(record))) {
-    throw new ImportValidationError("INVALID_JSON_SHAPE", "JSON must be an object or an array of flat objects.");
+    throw new ImportValidationError(
+      "INVALID_JSON_SHAPE",
+      "JSON must be an object or an array of flat objects.",
+    );
   }
 
   const headers = Array.from(new Set(records.flatMap((record) => Object.keys(record as object))));
-  if (!headers.length || headers.length > MAX_COLUMNS) throw new ImportValidationError("INVALID_JSON_COLUMNS", `JSON records must contain 1–${MAX_COLUMNS} fields.`);
-  if (headers.some((header) => header.length > 200)) throw new ImportValidationError("HEADER_TOO_LONG", "JSON field names are limited to 200 characters.");
+  if (!headers.length || headers.length > MAX_COLUMNS)
+    throw new ImportValidationError(
+      "INVALID_JSON_COLUMNS",
+      `JSON records must contain 1–${MAX_COLUMNS} fields.`,
+    );
+  if (headers.some((header) => header.length > 200))
+    throw new ImportValidationError(
+      "HEADER_TOO_LONG",
+      "JSON field names are limited to 200 characters.",
+    );
   const rows = records.map((record, index) => {
     const output: ImportRow = {};
     for (const [key, raw] of Object.entries(record as Record<string, unknown>)) {
       if (raw !== null && !["string", "number", "boolean"].includes(typeof raw)) {
-        throw new ImportValidationError("NESTED_JSON_UNSUPPORTED", `Row ${index + 1}, field ${key} is nested. Flatten the record before import.`);
+        throw new ImportValidationError(
+          "NESTED_JSON_UNSUPPORTED",
+          `Row ${index + 1}, field ${key} is nested. Flatten the record before import.`,
+        );
       }
       if (typeof raw === "number" && !Number.isFinite(raw)) {
-        throw new ImportValidationError("NON_FINITE_VALUE", `Row ${index + 1}, field ${key} is not finite.`);
+        throw new ImportValidationError(
+          "NON_FINITE_VALUE",
+          `Row ${index + 1}, field ${key} is not finite.`,
+        );
       }
       if (typeof raw === "string" && raw.length > MAX_CELL_LENGTH) {
-        throw new ImportValidationError("CELL_TOO_LONG", `Row ${index + 1}, field ${key} exceeds the text limit.`);
+        throw new ImportValidationError(
+          "CELL_TOO_LONG",
+          `Row ${index + 1}, field ${key} exceeds the text limit.`,
+        );
       }
       output[key] = raw as ImportRow[string];
     }
@@ -200,31 +255,53 @@ async function extractPdf(bytes: Uint8Array): Promise<string> {
     const timeout = new Promise<never>((_, reject) => {
       timer = setTimeout(() => {
         void task.destroy();
-        reject(new ImportValidationError("PDF_EXTRACTION_TIMEOUT", "PDF text extraction exceeded the 10-second safety limit.", 408));
+        reject(
+          new ImportValidationError(
+            "PDF_EXTRACTION_TIMEOUT",
+            "PDF text extraction exceeded the 10-second safety limit.",
+            408,
+          ),
+        );
       }, timeoutMs);
     });
     try {
-      return await Promise.race([(async () => {
-        document = await task.promise;
-        if (document.numPages > MAX_PDF_PAGES) {
-          throw new ImportValidationError("PDF_TOO_MANY_PAGES", `PDF imports are limited to ${MAX_PDF_PAGES} pages.`);
-        }
-        const pages: string[] = [];
-        let extractedCharacters = 0;
-        for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
-          const page = await document.getPage(pageNumber);
-          const content = await page.getTextContent();
-          const pageText = content.items.map((item) => ("str" in item ? item.str : "")).filter(Boolean).join(" ");
-          pages.push(pageText);
-          extractedCharacters += pageText.length + 1;
-          if (extractedCharacters > MAX_EXTRACTED_TEXT) {
-            throw new ImportValidationError("PDF_TEXT_TOO_LONG", "The extracted PDF text exceeds the safe processing limit.");
+      return await Promise.race([
+        (async () => {
+          document = await task.promise;
+          if (document.numPages > MAX_PDF_PAGES) {
+            throw new ImportValidationError(
+              "PDF_TOO_MANY_PAGES",
+              `PDF imports are limited to ${MAX_PDF_PAGES} pages.`,
+            );
           }
-        }
-        const text = pages.join("\n").trim();
-        if (!text) throw new ImportValidationError("PDF_NO_TEXT", "No selectable text was found. Scanned or encrypted PDFs require OCR and are not accepted.");
-        return text;
-      })(), timeout]);
+          const pages: string[] = [];
+          let extractedCharacters = 0;
+          for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
+            const page = await document.getPage(pageNumber);
+            const content = await page.getTextContent();
+            const pageText = content.items
+              .map((item) => ("str" in item ? item.str : ""))
+              .filter(Boolean)
+              .join(" ");
+            pages.push(pageText);
+            extractedCharacters += pageText.length + 1;
+            if (extractedCharacters > MAX_EXTRACTED_TEXT) {
+              throw new ImportValidationError(
+                "PDF_TEXT_TOO_LONG",
+                "The extracted PDF text exceeds the safe processing limit.",
+              );
+            }
+          }
+          const text = pages.join("\n").trim();
+          if (!text)
+            throw new ImportValidationError(
+              "PDF_NO_TEXT",
+              "No selectable text was found. Scanned or encrypted PDFs require OCR and are not accepted.",
+            );
+          return text;
+        })(),
+        timeout,
+      ]);
     } finally {
       if (timer) clearTimeout(timer);
       if (document) await document.destroy();
@@ -232,7 +309,10 @@ async function extractPdf(bytes: Uint8Array): Promise<string> {
     }
   } catch (error) {
     if (error instanceof ImportValidationError) throw error;
-    throw new ImportValidationError("PDF_EXTRACTION_FAILED", "The PDF text could not be extracted. Confirm it is not encrypted or scanned.");
+    throw new ImportValidationError(
+      "PDF_EXTRACTION_FAILED",
+      "The PDF text could not be extracted. Confirm it is not encrypted or scanned.",
+    );
   }
 }
 
@@ -255,10 +335,33 @@ const HEURISTICS: Array<{ patterns: RegExp; field: CanonicalField }> = [
 export function proposeMappings(headers: string[]): ProposedMapping[] {
   return headers.map((sourceColumn) => {
     const canonical = CANONICAL_FIELDS.find((field) => field === sourceColumn.trim().toLowerCase());
-    if (canonical) return { sourceColumn, canonicalField: canonical, confidence: 1, rationale: "Exact canonical heading.", requiresApproval: true, source: "canonical" };
+    if (canonical)
+      return {
+        sourceColumn,
+        canonicalField: canonical,
+        confidence: 1,
+        rationale: "Exact canonical heading.",
+        requiresApproval: true,
+        source: "canonical",
+      };
     const heuristic = HEURISTICS.find(({ patterns }) => patterns.test(sourceColumn.trim()));
-    if (heuristic) return { sourceColumn, canonicalField: heuristic.field, confidence: 0.68, rationale: "Name similarity only; confirm before applying.", requiresApproval: true, source: "heuristic" };
-    return { sourceColumn, canonicalField: null, confidence: 0, rationale: "No safe deterministic mapping.", requiresApproval: true, source: "heuristic" };
+    if (heuristic)
+      return {
+        sourceColumn,
+        canonicalField: heuristic.field,
+        confidence: 0.68,
+        rationale: "Name similarity only; confirm before applying.",
+        requiresApproval: true,
+        source: "heuristic",
+      };
+    return {
+      sourceColumn,
+      canonicalField: null,
+      confidence: 0,
+      rationale: "No safe deterministic mapping.",
+      requiresApproval: true,
+      source: "heuristic",
+    };
   });
 }
 
@@ -267,7 +370,11 @@ export async function parseUpload(file: File): Promise<ParsedUpload> {
   const bytes = new Uint8Array(await file.arrayBuffer());
   if (extension === "pdf") {
     const signature = new TextDecoder("ascii").decode(bytes.slice(0, 5));
-    if (signature !== "%PDF-") throw new ImportValidationError("MALFORMED_PDF", "The file does not contain a valid PDF signature.");
+    if (signature !== "%PDF-")
+      throw new ImportValidationError(
+        "MALFORMED_PDF",
+        "The file does not contain a valid PDF signature.",
+      );
   }
   let headers: string[] = [];
   let rows: ImportRow[] = [];
@@ -284,7 +391,8 @@ export async function parseUpload(file: File): Promise<ParsedUpload> {
   } else {
     extractedText = decodeUtf8(bytes).trim();
     if (!extractedText) throw new ImportValidationError("EMPTY_TEXT", "The text report is empty.");
-    if (extractedText.length > MAX_EXTRACTED_TEXT) throw new ImportValidationError("TEXT_TOO_LONG", "The report exceeds the safe text limit.");
+    if (extractedText.length > MAX_EXTRACTED_TEXT)
+      throw new ImportValidationError("TEXT_TOO_LONG", "The report exceeds the safe text limit.");
     headers = ["report_text"];
     rows = [{ report_text: extractedText }];
   }
@@ -298,49 +406,69 @@ export async function parseUpload(file: File): Promise<ParsedUpload> {
     rows,
     extractedText,
     mappings,
-    canonical: mappings.every((mapping) => mapping.source === "canonical" && mapping.canonicalField !== null),
+    canonical: mappings.every(
+      (mapping) => mapping.source === "canonical" && mapping.canonicalField !== null,
+    ),
     warnings,
   };
 }
 
-const finiteNumber = z.union([z.number(), z.string().trim().min(1).transform((value, context) => {
-  const number = Number(value);
-  if (!Number.isFinite(number)) {
-    context.addIssue({ code: "custom", message: "Expected a finite number." });
-    return z.NEVER;
-  }
-  return number;
-})]);
+const finiteNumber = z.union([
+  z.number(),
+  z
+    .string()
+    .trim()
+    .min(1)
+    .transform((value, context) => {
+      const number = Number(value);
+      if (!Number.isFinite(number)) {
+        context.addIssue({ code: "custom", message: "Expected a finite number." });
+        return z.NEVER;
+      }
+      return number;
+    }),
+]);
 
 const booleanLike = z.union([
   z.boolean(),
-  z.string().trim().toLowerCase().transform((value, context) => {
-    if (["true", "1", "yes"].includes(value)) return true;
-    if (["false", "0", "no"].includes(value)) return false;
-    context.addIssue({ code: "custom", message: "Expected true or false." });
-    return z.NEVER;
-  }),
+  z
+    .string()
+    .trim()
+    .toLowerCase()
+    .transform((value, context) => {
+      if (["true", "1", "yes"].includes(value)) return true;
+      if (["false", "0", "no"].includes(value)) return false;
+      context.addIssue({ code: "custom", message: "Expected true or false." });
+      return z.NEVER;
+    }),
 ]);
 
-const normalizedTelemetrySchema = z.object({
-  timestamp: z.iso.datetime({ offset: true }),
-  zone_id: z.string().trim().min(1).max(80),
-  occupancy: finiteNumber.pipe(z.number().int().min(0)),
-  capacity: finiteNumber.pipe(z.number().int().positive()),
-  inflow_per_minute: finiteNumber.pipe(z.number().min(0)).optional(),
-  outflow_per_minute: finiteNumber.pipe(z.number().min(0)).optional(),
-  queue_minutes: finiteNumber.pipe(z.number().min(0)).optional(),
-  temperature_c: finiteNumber.pipe(z.number().min(-50).max(80)).optional(),
-  air_quality_index: finiteNumber.pipe(z.number().min(0).max(500)).optional(),
-  noise_db: finiteNumber.pipe(z.number().min(0).max(200)).optional(),
-  sensor_health: z.enum(["healthy", "degraded", "offline"]).optional().default("healthy"),
-  blocked: booleanLike.optional().default(false),
-  event_phase: z.enum(["pre-entry", "ingress", "live-match", "halftime", "egress"]),
-}).strict().superRefine((value, context) => {
-  if (value.occupancy > value.capacity) {
-    context.addIssue({ code: "custom", path: ["occupancy"], message: "Occupancy cannot exceed declared capacity." });
-  }
-});
+const normalizedTelemetrySchema = z
+  .object({
+    timestamp: z.iso.datetime({ offset: true }),
+    zone_id: z.string().trim().min(1).max(80),
+    occupancy: finiteNumber.pipe(z.number().int().min(0)),
+    capacity: finiteNumber.pipe(z.number().int().positive()),
+    inflow_per_minute: finiteNumber.pipe(z.number().min(0)).optional(),
+    outflow_per_minute: finiteNumber.pipe(z.number().min(0)).optional(),
+    queue_minutes: finiteNumber.pipe(z.number().min(0)).optional(),
+    temperature_c: finiteNumber.pipe(z.number().min(-50).max(80)).optional(),
+    air_quality_index: finiteNumber.pipe(z.number().min(0).max(500)).optional(),
+    noise_db: finiteNumber.pipe(z.number().min(0).max(200)).optional(),
+    sensor_health: z.enum(["healthy", "degraded", "offline"]).optional().default("healthy"),
+    blocked: booleanLike.optional().default(false),
+    event_phase: z.enum(["pre-entry", "ingress", "live-match", "halftime", "egress"]),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (value.occupancy > value.capacity) {
+      context.addIssue({
+        code: "custom",
+        path: ["occupancy"],
+        message: "Occupancy cannot exceed declared capacity.",
+      });
+    }
+  });
 
 export function normalizeMappedRows(
   rows: ImportRow[],
@@ -348,19 +476,43 @@ export function normalizeMappedRows(
   allowedZoneIds: ReadonlySet<string>,
 ): NormalizedImportResult {
   const issues: ValidationIssue[] = [];
-  const targetFields = mappings.filter((mapping) => mapping.canonicalField).map((mapping) => mapping.canonicalField);
+  const targetFields = mappings
+    .filter((mapping) => mapping.canonicalField)
+    .map((mapping) => mapping.canonicalField);
   if (new Set(targetFields).size !== targetFields.length) {
-    issues.push({ row: 0, code: "DUPLICATE_MAPPING", message: "Two source columns cannot map to the same canonical field.", severity: "error" });
+    issues.push({
+      row: 0,
+      code: "DUPLICATE_MAPPING",
+      message: "Two source columns cannot map to the same canonical field.",
+      severity: "error",
+    });
   }
   const normalized = rows.flatMap((row, index) => {
-    const mapped = Object.fromEntries(mappings.filter((mapping) => mapping.canonicalField).map((mapping) => [mapping.canonicalField, row[mapping.sourceColumn]]));
+    const mapped = Object.fromEntries(
+      mappings
+        .filter((mapping) => mapping.canonicalField)
+        .map((mapping) => [mapping.canonicalField, row[mapping.sourceColumn]]),
+    );
     const result = normalizedTelemetrySchema.safeParse(mapped);
     if (!result.success) {
-      for (const issue of result.error.issues) issues.push({ row: index + 1, field: String(issue.path[0] ?? "row"), code: issue.code, message: issue.message, severity: "error" });
+      for (const issue of result.error.issues)
+        issues.push({
+          row: index + 1,
+          field: String(issue.path[0] ?? "row"),
+          code: issue.code,
+          message: issue.message,
+          severity: "error",
+        });
       return [];
     }
     if (!allowedZoneIds.has(result.data.zone_id)) {
-      issues.push({ row: index + 1, field: "zone_id", code: "UNKNOWN_ZONE", message: `Zone ${result.data.zone_id} is unknown and must be mapped.`, severity: "error" });
+      issues.push({
+        row: index + 1,
+        field: "zone_id",
+        code: "UNKNOWN_ZONE",
+        message: `Zone ${result.data.zone_id} is unknown and must be mapped.`,
+        severity: "error",
+      });
       return [];
     }
     return [result.data as unknown as Record<CanonicalField, unknown>];
@@ -371,6 +523,11 @@ export function normalizeMappedRows(
     accepted: errorCount === 0 && normalized.length === rows.length,
     rows: normalized,
     issues,
-    summary: { inputRows: rows.length, validRows: normalized.length, errorCount, warningCount: issues.length - errorCount },
+    summary: {
+      inputRows: rows.length,
+      validRows: normalized.length,
+      errorCount,
+      warningCount: issues.length - errorCount,
+    },
   };
 }

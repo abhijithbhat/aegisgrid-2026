@@ -14,4 +14,4 @@ AegisGrid targets WCAG 2.2 AA and is designed for a time-pressured desktop opera
 - Announcements and buttons avoid unexplained abbreviations; timestamps expose complete date/time labels.
 - Charts and map regions have equivalent textual summaries.
 
-Automated axe checks cover every primary view at 1440 px, 390 px, and 320 px. Playwright also checks horizontal reflow, skip-link behavior, roving tabs, and reduced-motion styling. Human QA should still verify screen-reader phrasing, 400% zoom, platform-specific high-contrast rendering, and cognitive load with stadium operators.
+Automated WCAG 2.2 A/AA axe checks cover every primary view at 1440 px, 390 px, and 320 px. Playwright also checks horizontal reflow, skip-link behavior, roving tabs, semantic landmarks and heading hierarchy, reduced-motion styling, increased contrast, and forced-colours focus visibility. Human QA should still verify screen-reader phrasing, 400% zoom, platform-specific combinations not covered by Chromium, and cognitive load with stadium operators.

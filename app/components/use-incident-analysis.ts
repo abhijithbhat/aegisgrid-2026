@@ -36,9 +36,7 @@ export function useIncidentAnalysis(analysisRequestBody: string) {
         if (!response.ok) throw new Error("health unavailable");
         const data = (await response.json()) as Record<string, unknown>;
         const ai = data.ai as Record<string, unknown> | undefined;
-        const services = data.services as
-          | Record<string, Record<string, unknown>>
-          | undefined;
+        const services = data.services as Record<string, Record<string, unknown>> | undefined;
         const rawStatus = String(
           ai?.status ?? services?.ai?.status ?? data.aiStatus ?? "",
         ).toLowerCase();
@@ -62,10 +60,7 @@ export function useIncidentAnalysis(analysisRequestBody: string) {
     const incidentId = requestPayload.incidentId;
     const previousValidatedRequest = validatedRequestByIncident.current.get(incidentId);
     if (previousValidatedRequest === analysisRequestBody) return;
-    if (
-      !previousValidatedRequest &&
-      analysisStateRef.current[incidentId]?.status === "available"
-    ) {
+    if (!previousValidatedRequest && analysisStateRef.current[incidentId]?.status === "available") {
       // Direct reports already carry a contract-validated recommendation.
       validatedRequestByIncident.current.set(incidentId, analysisRequestBody);
       return;
@@ -105,8 +100,7 @@ export function useIncidentAnalysis(analysisRequestBody: string) {
             if (!event || !data) continue;
             const parsed = JSON.parse(data) as Record<string, unknown>;
             if (event === "reasoning") {
-              const stage =
-                typeof parsed.stage === "string" ? parsed.stage : "Reasoning update";
+              const stage = typeof parsed.stage === "string" ? parsed.stage : "Reasoning update";
               const detail = typeof parsed.detail === "string" ? parsed.detail : "";
               setAnalysisByIncident((current) => {
                 const currentAnalysis = current[incidentId];
@@ -140,8 +134,7 @@ export function useIncidentAnalysis(analysisRequestBody: string) {
             ...current,
             [incidentId]: {
               status: "unavailable",
-              reason:
-                outcome.error?.message ?? outcome.reason ?? "Provider unavailable",
+              reason: outcome.error?.message ?? outcome.reason ?? "Provider unavailable",
             },
           }));
         }

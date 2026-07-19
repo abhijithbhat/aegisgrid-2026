@@ -5,8 +5,10 @@ import { AIProviderFailure, type AIProvider } from "../ai/provider";
 function providerFailure(error: unknown): AIProviderFailure {
   if (error instanceof GeminiInvocationError) {
     if (error.code === "AI_TIMEOUT") return new AIProviderFailure("TIMEOUT", error.retryable);
-    if (error.code === "AI_RATE_LIMITED") return new AIProviderFailure("RATE_LIMITED", error.retryable);
-    if (error.code === "AI_INVALID_RESPONSE") return new AIProviderFailure("INVALID_REQUEST", false);
+    if (error.code === "AI_RATE_LIMITED")
+      return new AIProviderFailure("RATE_LIMITED", error.retryable);
+    if (error.code === "AI_INVALID_RESPONSE")
+      return new AIProviderFailure("INVALID_REQUEST", false);
   }
   return new AIProviderFailure("UNAVAILABLE", true);
 }
@@ -36,9 +38,10 @@ export function createGeminiProvider(): AIProvider | undefined {
             outputRule: "Return only the requested JSON object.",
           },
           untrustedData: data,
-          task: request.purpose === "repair"
-            ? "Correct the supplied response using only the supplied facts and validation issues."
-            : "Produce an evidence-grounded incident recommendation for supervisor review.",
+          task:
+            request.purpose === "repair"
+              ? "Correct the supplied response using only the supplied facts and validation issues."
+              : "Produce an evidence-grounded incident recommendation for supervisor review.",
           responseJsonSchema: AI_RECOMMENDATION_JSON_SCHEMA,
           temperature: request.purpose === "repair" ? 0 : 0.15,
           maxOutputTokens: 4_096,

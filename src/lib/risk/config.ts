@@ -71,9 +71,7 @@ export const DEFAULT_RISK_CONFIG: Readonly<RiskEngineConfig> = Object.freeze({
 const WEIGHT_EPSILON = 1e-9;
 
 export function assertValidRiskConfig(config: RiskEngineConfig): void {
-  const weightEntries = Object.entries(config.weights) as Array<
-    [RiskComponentName, number]
-  >;
+  const weightEntries = Object.entries(config.weights) as Array<[RiskComponentName, number]>;
   const invalidWeight = weightEntries.find(
     ([, weight]) => !Number.isFinite(weight) || weight < 0 || weight > 1,
   );

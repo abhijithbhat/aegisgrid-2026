@@ -110,8 +110,10 @@ function stringArray(
   );
 }
 
-const SENSOR_TERMS = /\b(occupancy|capacity|inflow|outflow|queue|temperature|air quality|aqi|noise|sensor)\b/i;
-const PEOPLE_OR_INJURY_TERMS = /\b(person|people|injur(?:y|ed)|unconscious|fainted|bleeding|wheelchair)\b/i;
+const SENSOR_TERMS =
+  /\b(occupancy|capacity|inflow|outflow|queue|temperature|air quality|aqi|noise|sensor)\b/i;
+const PEOPLE_OR_INJURY_TERMS =
+  /\b(person|people|injur(?:y|ed)|unconscious|fainted|bleeding|wheelchair)\b/i;
 const NUMBER_TOKEN = /-?\d+(?:\.\d+)?%?/g;
 
 function groundedFact(
@@ -183,12 +185,7 @@ function parseContradictions(
   return expectArray(value, "contradictions", issues, 20).map((item, index) => {
     const path = `contradictions[${index}]`;
     const record = expectRecord(item, path, issues);
-    rejectUnknownKeys(
-      record,
-      ["sourceIds", "description", "operationalImpact"],
-      path,
-      issues,
-    );
+    rejectUnknownKeys(record, ["sourceIds", "description", "operationalImpact"], path, issues);
     const sourceIds = stringArray(record.sourceIds, `${path}.sourceIds`, issues, 12);
     if (sourceIds.length < 2) {
       issues.push({
@@ -228,14 +225,7 @@ function parseActions(value: unknown, issues: ContractIssue[]): RecommendedActio
     const record = expectRecord(item, path, issues);
     rejectUnknownKeys(
       record,
-      [
-        "priority",
-        "action",
-        "ownerRole",
-        "targetMinutes",
-        "justification",
-        "requiresApproval",
-      ],
+      ["priority", "action", "ownerRole", "targetMinutes", "justification", "requiresApproval"],
       path,
       issues,
     );
@@ -289,11 +279,17 @@ function parseActions(value: unknown, issues: ContractIssue[]): RecommendedActio
 }
 
 const UNSAFE_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
-  { pattern: /\b(?:has|have|was|were) (?:already )?dispatched\b/i, label: "automatic dispatch claim" },
+  {
+    pattern: /\b(?:has|have|was|were) (?:already )?dispatched\b/i,
+    label: "automatic dispatch claim",
+  },
   { pattern: /\b(?:diagnosed|diagnosis is|definitely has)\b/i, label: "medical diagnosis" },
   { pattern: /\bchain[- ]of[- ]thought\b|\binternal reasoning\b/i, label: "hidden reasoning" },
   { pattern: /\bfacial recognition\b|\bbiometric\b/i, label: "biometric processing" },
-  { pattern: /\binfer(?:red|ring)? (?:their )?(?:identity|race|religion|ethnicity)\b/i, label: "personal identity inference" },
+  {
+    pattern: /\binfer(?:red|ring)? (?:their )?(?:identity|race|religion|ethnicity)\b/i,
+    label: "personal identity inference",
+  },
 ];
 
 function checkSafetyPolicy(recommendation: AIRecommendation, issues: ContractIssue[]): void {
@@ -338,12 +334,7 @@ export function parseAIRecommendation(
   );
 
   const announcementRecord = expectRecord(record.announcement, "announcement", issues);
-  rejectUnknownKeys(
-    announcementRecord,
-    ["language", "tone", "text"],
-    "announcement",
-    issues,
-  );
+  rejectUnknownKeys(announcementRecord, ["language", "tone", "text"], "announcement", issues);
   const requiresHumanApproval = requiredBoolean(
     record.requiresHumanApproval,
     "requiresHumanApproval",
@@ -384,12 +375,7 @@ export function parseAIRecommendation(
         }),
         80,
       ),
-      tone: enumValue(
-        announcementRecord.tone,
-        ANNOUNCEMENT_TONES,
-        "announcement.tone",
-        issues,
-      ),
+      tone: enumValue(announcementRecord.tone, ANNOUNCEMENT_TONES, "announcement.tone", issues),
       text: sanitizePlainText(
         requiredString(announcementRecord.text, "announcement.text", issues, {
           max: 1_000,
@@ -436,7 +422,12 @@ export function parseSchemaMappingProposal(
     }
     let targetField: ProposedFieldMapping["targetField"] = null;
     if (record.canonicalField !== null) {
-      targetField = enumValue(record.canonicalField, CANONICAL_FIELDS, `${path}.canonicalField`, issues);
+      targetField = enumValue(
+        record.canonicalField,
+        CANONICAL_FIELDS,
+        `${path}.canonicalField`,
+        issues,
+      );
     }
     const confidence = finiteNumber(record.confidence, `${path}.confidence`, issues, {
       min: 0,
@@ -455,7 +446,11 @@ export function parseSchemaMappingProposal(
       });
     }
     if (record.source !== "ai") {
-      issues.push({ path: `${path}.source`, code: "invalid_value", message: "AI mapping responses must identify their source as ai." });
+      issues.push({
+        path: `${path}.source`,
+        code: "invalid_value",
+        message: "AI mapping responses must identify their source as ai.",
+      });
     }
     return {
       sourceField,

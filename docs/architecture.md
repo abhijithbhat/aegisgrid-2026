@@ -22,6 +22,7 @@ Deterministic code owns arithmetic, validation, route calculation, heap ordering
 ## Runtime surfaces
 
 - `app/` contains the operator experience and typed server routes.
+- `app/styles/` separates the ordered global cascade by responsibility, while `AppChrome` isolates global navigation, status, and footer semantics from incident workflow state.
 - `src/lib/risk` calculates the transparent 0–100 baseline.
 - `src/lib/incidents` blocks and ranks duplicate candidates, then maintains the binary heap.
 - `src/lib/routing` calculates primary, alternate, and naive routes over an adjacency list.
@@ -66,7 +67,6 @@ The dark base is functional: a stadium supervisor may monitor this common operat
 
 Layout follows an 8px grid, a three-tier type hierarchy, and 1px surface borders. Motion is limited to critical-incident arrival, route scanning, and progressive validated reasoning; all are disabled under `prefers-reduced-motion`.
 
-
 ## Risk formula
 
 Each component is normalized to 0–100, then combined from central named weights:
@@ -82,6 +82,10 @@ Event phase is one visible normalized component with a configured weight, not a 
 - Peek: `O(1)`
 - Candidate blocking: neighbourhood/time-window filtering before semantic comparison
 - Dijkstra/A*: `O((V + E) log V)` with adjacency-list edges and the same heap implementation
+
+## Quality gates
+
+Every push must pass Prettier, strict TypeScript, ESLint core-web-vitals, unit/integration coverage, environment validation, a production build, repository-size enforcement, and Playwright browser checks. Coverage thresholds are executable configuration rather than documentation: 90% statements, 82% branches, 90% functions, and 90% lines across the domain and server-boundary modules.
 
 ## Failure semantics
 

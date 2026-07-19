@@ -12,8 +12,7 @@ export interface ContractIssue {
 }
 
 export type ContractResult<T> =
-  | { success: true; data: T }
-  | { success: false; issues: ContractIssue[] };
+  { success: true; data: T } | { success: false; issues: ContractIssue[] };
 
 export class ContractValidationError extends Error {
   readonly code = "CONTRACT_VALIDATION_FAILED";
@@ -110,11 +109,7 @@ export function enumValue<const T extends readonly string[]>(
   return value as T[number];
 }
 
-export function requiredBoolean(
-  value: unknown,
-  path: string,
-  issues: ContractIssue[],
-): boolean {
+export function requiredBoolean(value: unknown, path: string, issues: ContractIssue[]): boolean {
   if (typeof value !== "boolean") {
     issues.push({ path, code: "invalid_type", message: "Expected a boolean." });
     return false;
@@ -139,4 +134,3 @@ export function unknownToJson(value: unknown): ContractResult<unknown> {
     };
   }
 }
-

@@ -9,13 +9,36 @@ const stringArray = { type: "array", items: { type: "string" } };
 export const AI_RECOMMENDATION_JSON_SCHEMA: Record<string, unknown> = {
   type: "object",
   required: [
-    "summary", "incidentType", "severity", "confidence", "evidence", "contradictions",
-    "missingInformation", "clarifyingQuestions", "recommendedActions", "recommendedTeamType",
-    "equipment", "announcement", "uncertaintyNote", "requiresHumanApproval",
+    "summary",
+    "incidentType",
+    "severity",
+    "confidence",
+    "evidence",
+    "contradictions",
+    "missingInformation",
+    "clarifyingQuestions",
+    "recommendedActions",
+    "recommendedTeamType",
+    "equipment",
+    "announcement",
+    "uncertaintyNote",
+    "requiresHumanApproval",
   ],
   properties: {
     summary: { type: "string" },
-    incidentType: { type: "string", enum: ["medical", "fire", "crowd", "security", "infrastructure", "accessibility", "lost_person", "other"] },
+    incidentType: {
+      type: "string",
+      enum: [
+        "medical",
+        "fire",
+        "crowd",
+        "security",
+        "infrastructure",
+        "accessibility",
+        "lost_person",
+        "other",
+      ],
+    },
     severity: { type: "string", enum: ["low", "moderate", "high", "critical"] },
     confidence: { type: "number" },
     evidence: {
@@ -48,7 +71,14 @@ export const AI_RECOMMENDATION_JSON_SCHEMA: Record<string, unknown> = {
       type: "array",
       items: {
         type: "object",
-        required: ["priority", "action", "ownerRole", "targetMinutes", "justification", "requiresApproval"],
+        required: [
+          "priority",
+          "action",
+          "ownerRole",
+          "targetMinutes",
+          "justification",
+          "requiresApproval",
+        ],
         properties: {
           priority: { type: "integer" },
           action: { type: "string" },
@@ -59,7 +89,10 @@ export const AI_RECOMMENDATION_JSON_SCHEMA: Record<string, unknown> = {
         },
       },
     },
-    recommendedTeamType: { type: "string", enum: ["medical", "security", "fire", "accessibility", "maintenance", "crowd_control"] },
+    recommendedTeamType: {
+      type: "string",
+      enum: ["medical", "security", "fire", "accessibility", "maintenance", "crowd_control"],
+    },
     equipment: stringArray,
     announcement: {
       type: "object",
@@ -75,7 +108,6 @@ export const AI_RECOMMENDATION_JSON_SCHEMA: Record<string, unknown> = {
   },
 };
 
-
 export const SCHEMA_MAPPING_JSON_SCHEMA: Record<string, unknown> = {
   type: "object",
   required: ["mappings"],
@@ -84,7 +116,14 @@ export const SCHEMA_MAPPING_JSON_SCHEMA: Record<string, unknown> = {
       type: "array",
       items: {
         type: "object",
-        required: ["sourceColumn", "canonicalField", "confidence", "rationale", "requiresApproval", "source"],
+        required: [
+          "sourceColumn",
+          "canonicalField",
+          "confidence",
+          "rationale",
+          "requiresApproval",
+          "source",
+        ],
         properties: {
           sourceColumn: { type: "string" },
           canonicalField: { type: "string" },
@@ -100,7 +139,14 @@ export const SCHEMA_MAPPING_JSON_SCHEMA: Record<string, unknown> = {
 
 export const FUSION_JSON_SCHEMA: Record<string, unknown> = {
   type: "object",
-  required: ["reportAId", "reportBId", "sameIncident", "confidence", "explanation", "contradictions"],
+  required: [
+    "reportAId",
+    "reportBId",
+    "sameIncident",
+    "confidence",
+    "explanation",
+    "contradictions",
+  ],
   properties: {
     reportAId: { type: "string" },
     reportBId: { type: "string" },

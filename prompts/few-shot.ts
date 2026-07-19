@@ -3,7 +3,10 @@ export const INCIDENT_ANALYSIS_FEW_SHOT = Object.freeze([
     input: {
       sources: [
         { sourceId: "STAFF-17", text: "Person collapsed behind west food kiosks." },
-        { sourceId: "RADIO-04", text: "Medical help needed by West Food Court; person unresponsive." },
+        {
+          sourceId: "RADIO-04",
+          text: "Medical help needed by West Food Court; person unresponsive.",
+        },
       ],
       deterministicRisk: { score: 68, severity: "high" },
     },
@@ -34,7 +37,11 @@ export const FUSION_FEW_SHOT = Object.freeze([
   {
     reports: [
       { id: "R1", zoneId: "west-food", text: "Someone fainted behind the west stairs." },
-      { id: "R2", zoneId: "west-food", text: "Una persona está inconsciente cerca del patio de comidas oeste." },
+      {
+        id: "R2",
+        zoneId: "west-food",
+        text: "Una persona está inconsciente cerca del patio de comidas oeste.",
+      },
     ],
     sameIncident: true,
     reason: "Compatible location, timing and medical event despite different wording/language.",
@@ -48,4 +55,3 @@ export const FUSION_FEW_SHOT = Object.freeze([
     reason: "Distinct people and precise locations outweigh temporal proximity.",
   },
 ]);
-

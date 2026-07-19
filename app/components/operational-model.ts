@@ -69,16 +69,15 @@ export const AUDIT_LABEL_BY_ACTION: Readonly<Record<string, string>> = Object.fr
   ),
 );
 
-export const TEAM_BY_TYPE: Readonly<
-  Record<AIRecommendation["recommendedTeamType"], string>
-> = Object.freeze({
-  medical: "Medical Alpha",
-  security: "Security Delta",
-  fire: "Fire Safety 1",
-  accessibility: "Accessibility Rover",
-  maintenance: "Facilities 2",
-  crowd_control: "Crowd Team North",
-});
+export const TEAM_BY_TYPE: Readonly<Record<AIRecommendation["recommendedTeamType"], string>> =
+  Object.freeze({
+    medical: "Medical Alpha",
+    security: "Security Delta",
+    fire: "Fire Safety 1",
+    accessibility: "Accessibility Rover",
+    maintenance: "Facilities 2",
+    crowd_control: "Crowd Team North",
+  });
 
 const STADIUM_GRAPH = buildStadiumGraph(STADIUM_ZONES, ZONE_EDGES);
 const ZONE_NAME = new Map(STADIUM_ZONES.map((zone) => [zone.id, zone.shortName]));
@@ -164,10 +163,8 @@ export function withDeterministicRisk(
   const zone = zones.find((item) => item.id === incident.zoneId);
   const explicitlyBlocked = zone ? /blocked|unavailable|fails|failure/i.test(zone.detail) : false;
   const reliability = incident.evidence.length
-    ? incident.evidence.reduce(
-        (sum, evidence) => sum + (Number(evidence.weight) || 0),
-        0,
-      ) / incident.evidence.length
+    ? incident.evidence.reduce((sum, evidence) => sum + (Number(evidence.weight) || 0), 0) /
+      incident.evidence.length
     : 0;
   const assessment = assessRisk({
     telemetry: zone
@@ -206,10 +203,7 @@ function formatRouteDuration(totalSeconds: number): string {
   return `${Math.floor(totalSeconds / 60)}m ${Math.round(totalSeconds % 60)}s`;
 }
 
-export function withDeterministicRoute(
-  incident: Incident,
-  zones: readonly Zone[],
-): Incident {
+export function withDeterministicRoute(incident: Incident, zones: readonly Zone[]): Incident {
   const fromZoneId = TEAM_START_ZONE[incident.team];
   const toZoneId = DOMAIN_ZONE_BY_UI[incident.zoneId];
   if (!fromZoneId || !toZoneId) return incident;

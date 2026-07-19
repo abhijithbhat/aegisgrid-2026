@@ -15,12 +15,26 @@ async function selectView(page, name, mobile) {
 }
 
 async function capture(page, path) {
-  await page.evaluate(() => { window.scrollTo(0, 0); if (document.activeElement instanceof HTMLElement) document.activeElement.blur(); });
+  await page.evaluate(() => {
+    window.scrollTo(0, 0);
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+  });
   await page.waitForTimeout(250);
-  await page.screenshot({ path, type: "jpeg", quality: 85, fullPage: true, animations: "disabled", style: ".topbar{position:relative!important}.sidebar{position:absolute!important}.skip-link{display:none!important}" });
+  await page.screenshot({
+    path,
+    type: "jpeg",
+    quality: 85,
+    fullPage: true,
+    animations: "disabled",
+    style:
+      ".topbar{position:relative!important}.sidebar{position:absolute!important}.skip-link{display:none!important}",
+  });
 }
 
-for (const viewport of [{ label: "desktop", width: 1440, height: 900 }, { label: "mobile", width: 390, height: 844 }]) {
+for (const viewport of [
+  { label: "desktop", width: 1440, height: 900 },
+  { label: "mobile", width: 390, height: 844 },
+]) {
   const page = await browser.newPage({ viewport });
   await page.goto(origin);
   await page.getByRole("heading", { name: "Live Command Center" }).waitFor();

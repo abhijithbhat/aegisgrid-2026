@@ -28,25 +28,24 @@ export function computeOperationalPriority(
   incident: FusedIncident,
   now: Date = new Date(),
 ): number {
-  const ageMinutes = Math.max(
-    0,
-    (now.getTime() - new Date(incident.createdAt).getTime()) / 60_000,
-  );
+  const ageMinutes = Math.max(0, (now.getTime() - new Date(incident.createdAt).getTime()) / 60_000);
   const ageEscalation = Math.min(20, ageMinutes * 0.5);
   const confidenceContribution = incident.confidence * 8;
   const contradictionAttention = Math.min(8, incident.contradictions.length * 2);
   const vulnerabilityEscalation = incident.vulnerablePerson ? 18 : 0;
 
-  return Math.round(
-    (incident.riskScore +
-      SEVERITY_PRIORITY[incident.severity] +
-      STATUS_PRIORITY[incident.status] +
-      ageEscalation +
-      confidenceContribution +
-      contradictionAttention +
-      vulnerabilityEscalation) *
-      10,
-  ) / 10;
+  return (
+    Math.round(
+      (incident.riskScore +
+        SEVERITY_PRIORITY[incident.severity] +
+        STATUS_PRIORITY[incident.status] +
+        ageEscalation +
+        confidenceContribution +
+        contradictionAttention +
+        vulnerabilityEscalation) *
+        10,
+    ) / 10
+  );
 }
 
 /**
@@ -56,9 +55,7 @@ export function computeOperationalPriority(
 export class IncidentPriorityQueue {
   private sequence = 0;
 
-  private readonly heap = new BinaryHeap<
-    PrioritizedIncident & { sequence: number }
-  >((a, b) => {
+  private readonly heap = new BinaryHeap<PrioritizedIncident & { sequence: number }>((a, b) => {
     const byScore = b.priorityScore - a.priorityScore;
     return byScore === 0 ? a.sequence - b.sequence : byScore;
   });
@@ -146,16 +143,20 @@ export function rankOperationalItems<T>(
   });
   for (const item of items) {
     const signals = signalsFor(item);
-    const priorityScore = Math.round((
-      Math.min(100, Math.max(0, signals.riskScore))
-      + SEVERITY_PRIORITY[signals.severity]
-      + Math.min(1, Math.max(0, signals.confidence)) * 8
-      + Math.min(8, Math.max(0, signals.contradictionCount) * 2)
-      + (signals.awaitingApproval ? 14 : 0)
-      + (signals.vulnerablePerson ? 18 : 0)
-    ) * 10) / 10;
+    const priorityScore =
+      Math.round(
+        (Math.min(100, Math.max(0, signals.riskScore)) +
+          SEVERITY_PRIORITY[signals.severity] +
+          Math.min(1, Math.max(0, signals.confidence)) * 8 +
+          Math.min(8, Math.max(0, signals.contradictionCount) * 2) +
+          (signals.awaitingApproval ? 14 : 0) +
+          (signals.vulnerablePerson ? 18 : 0)) *
+          10,
+      ) / 10;
     heap.push({ item, priorityScore, sequence });
     sequence += 1;
   }
-  return heap.toSortedArray().map((entry) => ({ item: entry.item, priorityScore: entry.priorityScore }));
+  return heap
+    .toSortedArray()
+    .map((entry) => ({ item: entry.item, priorityScore: entry.priorityScore }));
 }

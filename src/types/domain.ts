@@ -5,12 +5,7 @@
  * choose UUIDs, but the domain does not couple itself to a specific generator.
  */
 
-export type EventPhase =
-  | "pre-entry"
-  | "ingress"
-  | "live-match"
-  | "halftime"
-  | "egress";
+export type EventPhase = "pre-entry" | "ingress" | "live-match" | "halftime" | "egress";
 
 export type Severity = "low" | "moderate" | "high" | "critical";
 
@@ -25,12 +20,7 @@ export type IncidentType =
   | "other";
 
 export type TeamType =
-  | "medical"
-  | "security"
-  | "fire"
-  | "accessibility"
-  | "maintenance"
-  | "crowd_control";
+  "medical" | "security" | "fire" | "accessibility" | "maintenance" | "crowd_control";
 
 export type ZoneKind =
   | "gate"
@@ -46,12 +36,7 @@ export type ZoneKind =
   | "pitch"
   | "other";
 
-export type ZoneOperationalStatus =
-  | "normal"
-  | "watch"
-  | "degraded"
-  | "restricted"
-  | "closed";
+export type ZoneOperationalStatus = "normal" | "watch" | "degraded" | "restricted" | "closed";
 
 export interface Point2D {
   x: number;
@@ -112,12 +97,7 @@ export interface TelemetryReading {
 }
 
 export type ReportSourceType =
-  | "staff"
-  | "spectator"
-  | "sensor"
-  | "radio"
-  | "camera-operator"
-  | "system";
+  "staff" | "spectator" | "sensor" | "radio" | "camera-operator" | "system";
 
 export interface IncidentReport {
   id: string;
@@ -279,11 +259,7 @@ export interface AuditEvent {
 }
 
 export type ScenarioEventKind =
-  | "telemetry"
-  | "report"
-  | "edge-status"
-  | "team-status"
-  | "phase-change";
+  "telemetry" | "report" | "edge-status" | "team-status" | "phase-change";
 
 export interface ScenarioEvent<TPayload = unknown> {
   id: string;

@@ -105,7 +105,11 @@ const validAI = (): AIRecommendation => ({
   ],
   recommendedTeamType: "medical",
   equipment: ["AED"],
-  announcement: { language: "en", tone: "calm", text: "Please keep the west food court access clear." },
+  announcement: {
+    language: "en",
+    tone: "calm",
+    text: "Please keep the west food court access clear.",
+  },
   uncertaintyNote: "The person's current breathing status is unknown.",
   requiresHumanApproval: true,
 });
@@ -146,11 +150,7 @@ describe("strict AI response contract", () => {
     });
     const repair = vi.fn(async () => validAI());
 
-    const outcome = await validateAIResponse(
-      response,
-      { allowedSourceIds: ["SRC-1"] },
-      repair,
-    );
+    const outcome = await validateAIResponse(response, { allowedSourceIds: ["SRC-1"] }, repair);
 
     expect(repair).not.toHaveBeenCalled();
     expect(outcome.status).toBe("available");
@@ -172,24 +172,49 @@ describe("untrusted telemetry validation", () => {
 
   it("rejects oversized and mismatched file metadata", () => {
     expect(
-      validateUploadDescriptor({ name: "payload.csv", size: 2 * 1024 * 1024 + 1, mimeType: "text/csv" }).valid,
+      validateUploadDescriptor({
+        name: "payload.csv",
+        size: 2 * 1024 * 1024 + 1,
+        mimeType: "text/csv",
+      }).valid,
     ).toBe(false);
     expect(
-      validateUploadDescriptor({ name: "payload.csv", size: 100, mimeType: "application/pdf" }).valid,
+      validateUploadDescriptor({ name: "payload.csv", size: 100, mimeType: "application/pdf" })
+        .valid,
     ).toBe(false);
   });
 
   it("rejects negative capacity, occupancy without capacity, NaN and unknown zones", () => {
     const result = validateTelemetryRows(
       [
-        { timestamp: "2026-07-10T10:00:00Z", zone_id: "gate-west", occupancy: 10, sensor_health: "healthy", blocked: false, event_phase: "ingress" },
-        { timestamp: "bad", zone_id: "unknown", capacity: -1, occupancy: Number.NaN, sensor_health: "healthy", blocked: false, event_phase: "ingress" },
+        {
+          timestamp: "2026-07-10T10:00:00Z",
+          zone_id: "gate-west",
+          occupancy: 10,
+          sensor_health: "healthy",
+          blocked: false,
+          event_phase: "ingress",
+        },
+        {
+          timestamp: "bad",
+          zone_id: "unknown",
+          capacity: -1,
+          occupancy: Number.NaN,
+          sensor_health: "healthy",
+          blocked: false,
+          event_phase: "ingress",
+        },
       ],
       context,
     );
     expect(result.accepted).toHaveLength(0);
     expect(result.issues.map((issue) => issue.code)).toEqual(
-      expect.arrayContaining(["missing_required", "invalid_timestamp", "unknown_zone", "invalid_number"]),
+      expect.arrayContaining([
+        "missing_required",
+        "invalid_timestamp",
+        "unknown_zone",
+        "invalid_number",
+      ]),
     );
   });
 

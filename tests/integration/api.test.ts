@@ -42,14 +42,16 @@ describe("typed API boundaries", () => {
     ] as const;
 
     for (const [name, route] of routes) {
-      const response = await route(new Request(`http://localhost/api/${name}`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          origin: "https://attacker.example",
-        },
-        body: "{}",
-      }));
+      const response = await route(
+        new Request(`http://localhost/api/${name}`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            origin: "https://attacker.example",
+          },
+          body: "{}",
+        }),
+      );
       const body = await response.json();
       expect(response.status, name).toBe(403);
       expect(body.error.code, name).toBe("ORIGIN_REJECTED");
@@ -58,16 +60,18 @@ describe("typed API boundaries", () => {
 
   it("accepts browser writes matching forwarded proxy headers", async () => {
     delete process.env.APP_ORIGIN;
-    const response = await analyze(new Request("http://localhost/api/analyze", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        origin: "https://aegisgrid-2026.example",
-        "x-forwarded-host": "aegisgrid-2026.example",
-        "x-forwarded-proto": "https",
-      },
-      body: JSON.stringify({ text: "Hello" }),
-    }));
+    const response = await analyze(
+      new Request("http://localhost/api/analyze", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: "https://aegisgrid-2026.example",
+          "x-forwarded-host": "aegisgrid-2026.example",
+          "x-forwarded-proto": "https",
+        },
+        body: JSON.stringify({ text: "Hello" }),
+      }),
+    );
     const body = await response.json();
     expect(response.status).not.toBe(403);
     expect(body.error?.code).not.toBe("ORIGIN_REJECTED");
@@ -75,37 +79,50 @@ describe("typed API boundaries", () => {
 
   it("does not let forwarded headers widen a configured production origin", async () => {
     process.env.APP_ORIGIN = "https://trusted.example";
-    const spoofed = await analyze(new Request("http://container.internal/api/analyze", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        origin: "https://attacker.example",
-        "x-forwarded-host": "attacker.example",
-        "x-forwarded-proto": "https",
-      },
-      body: "{}",
-    }));
+    const spoofed = await analyze(
+      new Request("http://container.internal/api/analyze", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: "https://attacker.example",
+          "x-forwarded-host": "attacker.example",
+          "x-forwarded-proto": "https",
+        },
+        body: "{}",
+      }),
+    );
     const rejected = await spoofed.json();
     expect(spoofed.status).toBe(403);
     expect(rejected.error.code).toBe("ORIGIN_REJECTED");
 
-    const trusted = await analyze(new Request("http://container.internal/api/analyze", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        origin: "https://trusted.example",
-      },
-      body: "{}",
-    }));
+    const trusted = await analyze(
+      new Request("http://container.internal/api/analyze", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: "https://trusted.example",
+        },
+        body: "{}",
+      }),
+    );
     expect(trusted.status).not.toBe(403);
   });
 
   it("accepts a canonical file only into the mapping-approval stage", async () => {
     const form = new FormData();
-    form.set("file", new File([
-      "timestamp,zone_id,occupancy,capacity,event_phase\n2026-07-10T14:00:00Z,GATE-W,20,100,ingress",
-    ], "reading.csv", { type: "text/csv" }));
-    const response = await upload(new Request("http://localhost/api/upload", { method: "POST", body: form }));
+    form.set(
+      "file",
+      new File(
+        [
+          "timestamp,zone_id,occupancy,capacity,event_phase\n2026-07-10T14:00:00Z,GATE-W,20,100,ingress",
+        ],
+        "reading.csv",
+        { type: "text/csv" },
+      ),
+    );
+    const response = await upload(
+      new Request("http://localhost/api/upload", { method: "POST", body: form }),
+    );
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -116,43 +133,49 @@ describe("typed API boundaries", () => {
 
   it("writes append-only audit events without claiming dispatch", async () => {
     const incidentId = `incident-${crypto.randomUUID()}`;
-    const response = await createAudit(new Request("http://localhost/api/audit", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        action: "recommendation-approved",
-        incidentId,
-        previousStatus: "awaiting-approval",
-        newStatus: "approved",
-        note: "Approved for team assignment; no dispatch performed by AegisGrid.",
-        aiRecommendationVersion: "aegis-ai-contract-1.0.0",
+    const response = await createAudit(
+      new Request("http://localhost/api/audit", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "recommendation-approved",
+          incidentId,
+          previousStatus: "awaiting-approval",
+          newStatus: "approved",
+          note: "Approved for team assignment; no dispatch performed by AegisGrid.",
+          aiRecommendationVersion: "aegis-ai-contract-1.0.0",
+        }),
       }),
-    }));
+    );
     const created = await response.json();
 
     expect(response.status).toBe(201);
     expect(created.dispatchPerformed).toBe(false);
 
-    const listResponse = await listAudit(new Request(`http://localhost/api/audit?incidentId=${incidentId}`));
+    const listResponse = await listAudit(
+      new Request(`http://localhost/api/audit?incidentId=${incidentId}`),
+    );
     const listed = await listResponse.json();
     expect(listed.events).toHaveLength(1);
     expect(listed.events[0].incidentId).toBe(incidentId);
   });
 
   it("rejects unknown JSON fields", async () => {
-    const response = await createAudit(new Request("http://localhost/api/audit", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        action: "recommendation-approved",
-        incidentId: "INC-1",
-        previousStatus: "new",
-        newStatus: "approved",
-        note: "",
-        aiRecommendationVersion: "v1",
-        dispatchEmergencyServices: true,
+    const response = await createAudit(
+      new Request("http://localhost/api/audit", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "recommendation-approved",
+          incidentId: "INC-1",
+          previousStatus: "new",
+          newStatus: "approved",
+          note: "",
+          aiRecommendationVersion: "v1",
+          dispatchEmergencyServices: true,
+        }),
       }),
-    }));
+    );
     const body = await response.json();
     expect(response.status).toBe(422);
     expect(body.error.code).toBe("VALIDATION_FAILED");
@@ -160,10 +183,27 @@ describe("typed API boundaries", () => {
 
   it("inspects flat JSON without silently importing it", async () => {
     const form = new FormData();
-    form.set("file", new File([JSON.stringify([{
-      timestamp: "2026-07-10T14:00:00Z", zone_id: "W-CONC", occupancy: 20, capacity: 100, event_phase: "ingress",
-    }])], "reading.json", { type: "application/json" }));
-    const response = await upload(new Request("http://localhost/api/upload", { method: "POST", body: form }));
+    form.set(
+      "file",
+      new File(
+        [
+          JSON.stringify([
+            {
+              timestamp: "2026-07-10T14:00:00Z",
+              zone_id: "W-CONC",
+              occupancy: 20,
+              capacity: 100,
+              event_phase: "ingress",
+            },
+          ]),
+        ],
+        "reading.json",
+        { type: "application/json" },
+      ),
+    );
+    const response = await upload(
+      new Request("http://localhost/api/upload", { method: "POST", body: form }),
+    );
     const body = await response.json();
     expect(response.status).toBe(200);
     expect(body.stage).toBe("mapping-approval-required");
@@ -173,64 +213,139 @@ describe("typed API boundaries", () => {
 
   it("rejects invalid UTF-8 and oversized files with public 4xx errors", async () => {
     const malformed = new FormData();
-    malformed.set("file", new File([new Uint8Array([0xff, 0xfe, 0xfd])], "bad.csv", { type: "text/csv" }));
-    const malformedResponse = await upload(new Request("http://localhost/api/upload", { method: "POST", body: malformed }));
+    malformed.set(
+      "file",
+      new File([new Uint8Array([0xff, 0xfe, 0xfd])], "bad.csv", { type: "text/csv" }),
+    );
+    const malformedResponse = await upload(
+      new Request("http://localhost/api/upload", { method: "POST", body: malformed }),
+    );
     expect(malformedResponse.status).toBe(400);
     expect((await malformedResponse.json()).error.code).toBe("INVALID_TEXT_ENCODING");
 
     const oversized = new FormData();
-    oversized.set("file", new File([new Uint8Array(2 * 1024 * 1024 + 1)], "large.csv", { type: "text/csv" }));
-    const oversizedResponse = await upload(new Request("http://localhost/api/upload", { method: "POST", body: oversized }));
+    oversized.set(
+      "file",
+      new File([new Uint8Array(2 * 1024 * 1024 + 1)], "large.csv", { type: "text/csv" }),
+    );
+    const oversizedResponse = await upload(
+      new Request("http://localhost/api/upload", { method: "POST", body: oversized }),
+    );
     expect(oversizedResponse.status).toBe(413);
   });
 
   it("validates approved mappings and rejects unknown zones", async () => {
-    const response = await upload(new Request("http://localhost/api/upload", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        action: "validate",
-        rows: [{ observed: "2026-07-10T14:00:00Z", area: "NOT-A-ZONE", people: 20, limit: 100, phase: "ingress" }],
-        mappings: [
-          ["observed", "timestamp"], ["area", "zone_id"], ["people", "occupancy"], ["limit", "capacity"], ["phase", "event_phase"],
-        ].map(([sourceColumn, canonicalField]) => ({ sourceColumn, canonicalField, confidence: 1, rationale: "Supervisor confirmed.", requiresApproval: true, source: "heuristic" })),
+    const response = await upload(
+      new Request("http://localhost/api/upload", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "validate",
+          rows: [
+            {
+              observed: "2026-07-10T14:00:00Z",
+              area: "NOT-A-ZONE",
+              people: 20,
+              limit: 100,
+              phase: "ingress",
+            },
+          ],
+          mappings: [
+            ["observed", "timestamp"],
+            ["area", "zone_id"],
+            ["people", "occupancy"],
+            ["limit", "capacity"],
+            ["phase", "event_phase"],
+          ].map(([sourceColumn, canonicalField]) => ({
+            sourceColumn,
+            canonicalField,
+            confidence: 1,
+            rationale: "Supervisor confirmed.",
+            requiresApproval: true,
+            source: "heuristic",
+          })),
+        }),
       }),
-    }));
+    );
     const body = await response.json();
     expect(response.status).toBe(422);
-    expect(body.validation.issues.map((issue: { code: string }) => issue.code)).toContain("UNKNOWN_ZONE");
+    expect(body.validation.issues.map((issue: { code: string }) => issue.code)).toContain(
+      "UNKNOWN_ZONE",
+    );
   });
 
   it("returns the full deterministic capability set when AI is unavailable", async () => {
     delete process.env.GEMINI_API_KEY;
-    const response = await analyze(new Request("http://localhost/api/analyze", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        incidentId: "INC-TEST", title: "Unstructured report", incidentType: "other", zoneId: "unconfirmed", eventPhase: "live-match",
-        deterministicRisk: { score: 10, severity: "low", explanation: "No telemetry linked." },
-        sources: [{ sourceId: "SRC-1", sourceType: "staff", text: "A person may need help near the west stairs.", reliability: 0.6 }],
-        route: { primaryZoneIds: ["unconfirmed"], alternateZoneIds: [], etaMinutes: 0, avoidedZoneIds: [], rationale: "Location must be confirmed." },
+    const response = await analyze(
+      new Request("http://localhost/api/analyze", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          incidentId: "INC-TEST",
+          title: "Unstructured report",
+          incidentType: "other",
+          zoneId: "unconfirmed",
+          eventPhase: "live-match",
+          deterministicRisk: { score: 10, severity: "low", explanation: "No telemetry linked." },
+          sources: [
+            {
+              sourceId: "SRC-1",
+              sourceType: "staff",
+              text: "A person may need help near the west stairs.",
+              reliability: 0.6,
+            },
+          ],
+          route: {
+            primaryZoneIds: ["unconfirmed"],
+            alternateZoneIds: [],
+            etaMinutes: 0,
+            avoidedZoneIds: [],
+            rationale: "Location must be confirmed.",
+          },
+        }),
       }),
-    }));
+    );
     const body = await response.json();
     expect(response.status).toBe(200);
     expect(body.outcome.status).toBe("degraded");
-    expect(body.outcome.deterministicCapabilities).toEqual(["risk-scoring", "routing", "telemetry"]);
+    expect(body.outcome.deterministicCapabilities).toEqual([
+      "risk-scoring",
+      "routing",
+      "telemetry",
+    ]);
   });
 
   it("streams validated reasoning milestones before the final degraded result", async () => {
     delete process.env.GEMINI_API_KEY;
-    const response = await analyze(new Request("http://localhost/api/analyze", {
-      method: "POST",
-      headers: { "content-type": "application/json", accept: "text/event-stream" },
-      body: JSON.stringify({
-        incidentId: "INC-STREAM", title: "Streaming contract test", incidentType: "other", zoneId: "unconfirmed", eventPhase: "live-match",
-        deterministicRisk: { score: 12, severity: "low", explanation: "No telemetry linked." },
-        sources: [{ sourceId: "SRC-STREAM", sourceType: "staff", text: "A person may need assistance.", reliability: 0.6 }],
-        route: { primaryZoneIds: ["unconfirmed"], alternateZoneIds: [], etaMinutes: 0, avoidedZoneIds: [], rationale: "Location must be confirmed." },
+    const response = await analyze(
+      new Request("http://localhost/api/analyze", {
+        method: "POST",
+        headers: { "content-type": "application/json", accept: "text/event-stream" },
+        body: JSON.stringify({
+          incidentId: "INC-STREAM",
+          title: "Streaming contract test",
+          incidentType: "other",
+          zoneId: "unconfirmed",
+          eventPhase: "live-match",
+          deterministicRisk: { score: 12, severity: "low", explanation: "No telemetry linked." },
+          sources: [
+            {
+              sourceId: "SRC-STREAM",
+              sourceType: "staff",
+              text: "A person may need assistance.",
+              reliability: 0.6,
+            },
+          ],
+          route: {
+            primaryZoneIds: ["unconfirmed"],
+            alternateZoneIds: [],
+            etaMinutes: 0,
+            avoidedZoneIds: [],
+            rationale: "Location must be confirmed.",
+          },
+        }),
       }),
-    }));
+    );
     const stream = await response.text();
     expect(response.headers.get("content-type")).toContain("text/event-stream");
     expect(stream).toContain("event: reasoning");
@@ -241,11 +356,13 @@ describe("typed API boundaries", () => {
 
   it("persists strict incident patches and keeps live sync honest in memory mode", async () => {
     delete process.env.ENABLE_FIRESTORE;
-    const update = await updateIncident(new Request("http://localhost/api/incidents", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ id: "INC-SYNC", status: "Monitoring", team: "Medical Alpha" }),
-    }));
+    const update = await updateIncident(
+      new Request("http://localhost/api/incidents", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id: "INC-SYNC", status: "Monitoring", team: "Medical Alpha" }),
+      }),
+    );
     expect(update.status).toBe(200);
     expect((await update.json()).persistence).toEqual({ mode: "memory", durable: false });
 
@@ -256,14 +373,36 @@ describe("typed API boundaries", () => {
 
   it("preserves distinct source reports in degraded fusion mode", async () => {
     delete process.env.GEMINI_API_KEY;
-    const response = await fuse(new Request("http://localhost/api/fuse", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ reports: [
-        { sourceId: "FALL-A", zoneId: "W-GATE", timestamp: "2026-07-10T14:00:00Z", text: "A person fell by the west gate.", language: "en", reliability: 0.8, incidentType: "medical", vulnerablePerson: true },
-        { sourceId: "CASE-B", zoneId: "W-CONC", timestamp: "2026-07-10T14:01:00Z", text: "An equipment case fell in the west concourse.", language: "en", reliability: 0.8, incidentType: "infrastructure", vulnerablePerson: false },
-      ] }),
-    }));
+    const response = await fuse(
+      new Request("http://localhost/api/fuse", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          reports: [
+            {
+              sourceId: "FALL-A",
+              zoneId: "W-GATE",
+              timestamp: "2026-07-10T14:00:00Z",
+              text: "A person fell by the west gate.",
+              language: "en",
+              reliability: 0.8,
+              incidentType: "medical",
+              vulnerablePerson: true,
+            },
+            {
+              sourceId: "CASE-B",
+              zoneId: "W-CONC",
+              timestamp: "2026-07-10T14:01:00Z",
+              text: "An equipment case fell in the west concourse.",
+              language: "en",
+              reliability: 0.8,
+              incidentType: "infrastructure",
+              vulnerablePerson: false,
+            },
+          ],
+        }),
+      }),
+    );
     const body = await response.json();
     expect(response.status).toBe(200);
     expect(body.sourceReportsPreserved).toBe(true);

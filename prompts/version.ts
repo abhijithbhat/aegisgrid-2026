@@ -5,4 +5,3 @@ export const PROMPT_VERSIONS = Object.freeze({
   announcement: "2026-07-10.1",
   contract: "aegis-ai-contract-1.0.0",
 });
-

@@ -10,7 +10,8 @@ export interface GeminiInvocation<T = unknown> {
   requestId: string;
 }
 
-export type GeminiFailureCode = "AI_UNAVAILABLE" | "AI_TIMEOUT" | "AI_RATE_LIMITED" | "AI_INVALID_RESPONSE";
+export type GeminiFailureCode =
+  "AI_UNAVAILABLE" | "AI_TIMEOUT" | "AI_RATE_LIMITED" | "AI_INVALID_RESPONSE";
 
 export class GeminiInvocationError extends Error {
   constructor(
@@ -37,7 +38,12 @@ export interface StructuredGenerationRequest {
   returnRawText?: boolean;
 }
 
-function configuration(): { apiKey: string; model: string; timeout: number; attempts: number } | null {
+function configuration(): {
+  apiKey: string;
+  model: string;
+  timeout: number;
+  attempts: number;
+} | null {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) return null;
   const model = process.env.GEMINI_MODEL?.trim() || DEFAULT_GEMINI_MODEL;
@@ -46,8 +52,12 @@ function configuration(): { apiKey: string; model: string; timeout: number; atte
   return {
     apiKey,
     model,
-    timeout: Number.isFinite(configuredTimeout) ? Math.min(30_000, Math.max(2_000, configuredTimeout)) : DEFAULT_AI_TIMEOUT_MS,
-    attempts: Number.isFinite(configuredRetries) ? Math.min(2, Math.max(1, Math.trunc(configuredRetries) + 1)) : 2,
+    timeout: Number.isFinite(configuredTimeout)
+      ? Math.min(30_000, Math.max(2_000, configuredTimeout))
+      : DEFAULT_AI_TIMEOUT_MS,
+    attempts: Number.isFinite(configuredRetries)
+      ? Math.min(2, Math.max(1, Math.trunc(configuredRetries) + 1))
+      : 2,
   };
 }
 
@@ -59,15 +69,19 @@ export function geminiCapability(): { available: boolean; model: string | null }
 function normalizeProviderError(error: unknown): GeminiInvocationError {
   const message = error instanceof Error ? error.message.toLowerCase() : "";
   // Log the provider error for operational diagnostics (no secrets or request bodies).
-  console.error(JSON.stringify({
-    severity: "ERROR",
-    component: "gemini-provider",
-    errorName: error instanceof Error ? error.name : "UnknownError",
-    errorMessage: error instanceof Error ? error.message : String(error),
-    timestamp: new Date().toISOString(),
-  }));
-  if (message.includes("timeout") || message.includes("abort")) return new GeminiInvocationError("AI_TIMEOUT", true);
-  if (message.includes("429") || message.includes("rate") || message.includes("quota")) return new GeminiInvocationError("AI_RATE_LIMITED", true);
+  console.error(
+    JSON.stringify({
+      severity: "ERROR",
+      component: "gemini-provider",
+      errorName: error instanceof Error ? error.name : "UnknownError",
+      errorMessage: error instanceof Error ? error.message : String(error),
+      timestamp: new Date().toISOString(),
+    }),
+  );
+  if (message.includes("timeout") || message.includes("abort"))
+    return new GeminiInvocationError("AI_TIMEOUT", true);
+  if (message.includes("429") || message.includes("rate") || message.includes("quota"))
+    return new GeminiInvocationError("AI_RATE_LIMITED", true);
   return new GeminiInvocationError("AI_UNAVAILABLE", true);
 }
 
@@ -118,7 +132,12 @@ export async function generateStructuredJson<T = unknown>(
     const text = response.text?.trim();
     if (!text) throw new GeminiInvocationError("AI_INVALID_RESPONSE", false);
     if (request.returnRawText) {
-      return { data: text as T, model: config.model, durationMs: Date.now() - started, requestId: request.requestId };
+      return {
+        data: text as T,
+        model: config.model,
+        durationMs: Date.now() - started,
+        requestId: request.requestId,
+      };
     }
     let data: T;
     try {
@@ -126,7 +145,12 @@ export async function generateStructuredJson<T = unknown>(
     } catch {
       throw new GeminiInvocationError("AI_INVALID_RESPONSE", false);
     }
-    return { data, model: config.model, durationMs: Date.now() - started, requestId: request.requestId };
+    return {
+      data,
+      model: config.model,
+      durationMs: Date.now() - started,
+      requestId: request.requestId,
+    };
   } catch (error) {
     if (error instanceof GeminiInvocationError) throw error;
     throw normalizeProviderError(error);

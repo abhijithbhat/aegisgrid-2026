@@ -26,4 +26,3 @@ test against a real venue, third-party account, or production credential.
 
 The detailed threat model, controls, and residual production requirements are
 documented in [`docs/security.md`](docs/security.md).
-

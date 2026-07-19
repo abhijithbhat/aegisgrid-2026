@@ -68,4 +68,3 @@ export function parseCsv(text: string): Array<Record<string, string>> {
     return Object.fromEntries(headers.map((header, column) => [header, values[column]]));
   });
 }
-

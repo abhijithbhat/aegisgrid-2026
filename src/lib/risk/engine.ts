@@ -57,8 +57,7 @@ export interface SeverityDisagreement {
   explanation: string;
 }
 
-const clamp = (value: number, min = 0, max = 100): number =>
-  Math.min(max, Math.max(min, value));
+const clamp = (value: number, min = 0, max = 100): number => Math.min(max, Math.max(min, value));
 
 const safeFinite = (value: number | undefined, fallback = 0): number =>
   value !== undefined && Number.isFinite(value) ? value : fallback;
@@ -69,8 +68,7 @@ function occupancyPressure(input: RiskAssessmentInput, config: RiskEngineConfig)
   if (occupancy === undefined || capacity === undefined || capacity <= 0) return 0;
 
   const ratio = Math.max(0, occupancy) / capacity;
-  const { occupancyBaselineRatio: baseline, occupancyCriticalRatio: critical } =
-    config.thresholds;
+  const { occupancyBaselineRatio: baseline, occupancyCriticalRatio: critical } = config.thresholds;
   return clamp(((ratio - baseline) / (critical - baseline)) * 100);
 }
 
@@ -88,9 +86,7 @@ function queuePressure(input: RiskAssessmentInput, config: RiskEngineConfig): nu
 
 function evidencePressure(input: RiskAssessmentInput, config: RiskEngineConfig): number {
   const sourceCount = Math.max(0, Math.floor(input.independentSourceCount));
-  const countScore = clamp(
-    (sourceCount / config.thresholds.evidenceSaturationSources) * 100,
-  );
+  const countScore = clamp((sourceCount / config.thresholds.evidenceSaturationSources) * 100);
   const reliabilityScore = clamp(input.meanSourceReliability * 100);
 
   // Independent corroboration is the primary signal; source reliability
@@ -146,8 +142,7 @@ export function assessRisk(
       component,
       normalizedValue: Math.round(components[component] * 10) / 10,
       weight: config.weights[component],
-      contribution:
-        Math.round(components[component] * config.weights[component] * 10) / 10,
+      contribution: Math.round(components[component] * config.weights[component] * 10) / 10,
       explanation: COMPONENT_EXPLANATIONS[component],
     }),
   );
@@ -168,10 +163,7 @@ export function assessRisk(
 }
 
 export function assessIncidentRisk(
-  incident: Pick<
-    FusedIncident,
-    "severity" | "sourceIds" | "evidence" | "vulnerablePerson"
-  >,
+  incident: Pick<FusedIncident, "severity" | "sourceIds" | "evidence" | "vulnerablePerson">,
   telemetry?: RiskAssessmentInput["telemetry"],
   config: RiskEngineConfig = DEFAULT_RISK_CONFIG,
 ): RiskAssessment {

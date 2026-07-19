@@ -30,15 +30,17 @@ function constrainReferencesToContext(
   const json = unknownToJson(raw);
   if (!json.success || !isRecord(json.data)) return { value: raw, changed: false };
 
-  const allowed = context.allowedSourceIds instanceof Set
-    ? context.allowedSourceIds
-    : new Set(context.allowedSourceIds);
+  const allowed =
+    context.allowedSourceIds instanceof Set
+      ? context.allowedSourceIds
+      : new Set(context.allowedSourceIds);
   let changed = false;
   const value = { ...json.data };
 
   if (Array.isArray(value.evidence)) {
     const evidence = value.evidence.filter((item) => {
-      const keep = isRecord(item) && typeof item.sourceId === "string" && allowed.has(item.sourceId);
+      const keep =
+        isRecord(item) && typeof item.sourceId === "string" && allowed.has(item.sourceId);
       if (!keep) changed = true;
       return keep;
     });
@@ -50,9 +52,13 @@ function constrainReferencesToContext(
   if (Array.isArray(value.contradictions)) {
     value.contradictions = value.contradictions.flatMap((item) => {
       if (!isRecord(item) || !Array.isArray(item.sourceIds)) return [item];
-      const sourceIds = [...new Set(item.sourceIds.filter(
-        (sourceId): sourceId is string => typeof sourceId === "string" && allowed.has(sourceId),
-      ))];
+      const sourceIds = [
+        ...new Set(
+          item.sourceIds.filter(
+            (sourceId): sourceId is string => typeof sourceId === "string" && allowed.has(sourceId),
+          ),
+        ),
+      ];
       if (sourceIds.length !== item.sourceIds.length) changed = true;
       if (sourceIds.length < 2) {
         changed = true;
@@ -128,11 +134,7 @@ export async function validateAIResponse(
   } catch {
     return degradedAIOutcome(
       "invalid-response",
-      safeOperationalError(
-        "AI_REPAIR_FAILED",
-        "AI analysis could not be safely repaired.",
-        false,
-      ),
+      safeOperationalError("AI_REPAIR_FAILED", "AI analysis could not be safely repaired.", false),
       true,
     );
   }

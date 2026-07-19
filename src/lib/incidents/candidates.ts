@@ -7,13 +7,12 @@ export interface DuplicateCandidateConfig {
   metadataWeight: number;
 }
 
-export const DEFAULT_DUPLICATE_CONFIG: Readonly<DuplicateCandidateConfig> =
-  Object.freeze({
-    timeWindowMinutes: 12,
-    minimumCandidateScore: 0.34,
-    lexicalWeight: 0.72,
-    metadataWeight: 0.28,
-  });
+export const DEFAULT_DUPLICATE_CONFIG: Readonly<DuplicateCandidateConfig> = Object.freeze({
+  timeWindowMinutes: 12,
+  minimumCandidateScore: 0.34,
+  lexicalWeight: 0.72,
+  metadataWeight: 0.28,
+});
 
 export interface DuplicateCandidate {
   pairKey: string;
@@ -141,9 +140,7 @@ export function generateDuplicateCandidates(
   assertCandidateConfig(config);
   const sorted = [...reports]
     .filter((report) => !report.dismissed)
-    .sort(
-      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
-    );
+    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
   const neighbourhood = buildNeighbourhood(edges);
   const windowMs = config.timeWindowMinutes * 60_000;
   const candidates: DuplicateCandidate[] = [];
@@ -162,10 +159,7 @@ export function generateDuplicateCandidates(
 
       const sameZone = Boolean(a.zoneId && b.zoneId && a.zoneId === b.zoneId);
       const neighbouringZones = Boolean(
-        a.zoneId &&
-          b.zoneId &&
-          !sameZone &&
-          neighbourhood.get(a.zoneId)?.has(b.zoneId),
+        a.zoneId && b.zoneId && !sameZone && neighbourhood.get(a.zoneId)?.has(b.zoneId),
       );
       if (!sameZone && !neighbouringZones) continue;
 
@@ -206,4 +200,3 @@ export function generateDuplicateCandidates(
 
   return candidates;
 }
-

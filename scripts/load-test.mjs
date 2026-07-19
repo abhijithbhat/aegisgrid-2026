@@ -20,5 +20,11 @@ async function worker() {
 await Promise.all(Array.from({ length: concurrency }, worker));
 durations.sort((a, b) => a - b);
 const p95 = durations[Math.max(0, Math.ceil(durations.length * 0.95) - 1)] ?? 0;
-console.log(JSON.stringify({ requests, successes: durations.length, failures, p95Ms: Math.round(p95) }, null, 2));
+console.log(
+  JSON.stringify(
+    { requests, successes: durations.length, failures, p95Ms: Math.round(p95) },
+    null,
+    2,
+  ),
+);
 if (failures > 0) process.exit(1);

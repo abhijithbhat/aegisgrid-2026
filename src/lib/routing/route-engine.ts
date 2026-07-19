@@ -1,10 +1,4 @@
-import type {
-  EdgeAccess,
-  RouteLeg,
-  RoutePath,
-  RouteResult,
-  ZoneEdge,
-} from "../../types";
+import type { EdgeAccess, RouteLeg, RoutePath, RouteResult, ZoneEdge } from "../../types";
 import { BinaryHeap } from "../incidents/binary-heap";
 import { StadiumGraph, type DirectedZoneEdge } from "./graph";
 
@@ -78,9 +72,7 @@ function createContext(
     blockedEdges: new Set([...(request.blockedEdgeIds ?? []), ...additionalBlockedEdges]),
     blockedZones: new Set(request.blockedZoneIds ?? []),
     avoidedZones: new Set(request.avoidZoneIds ?? []),
-    allowedAccess: new Set(
-      request.allowedAccess ?? ["public", "staff", "emergency-only"],
-    ),
+    allowedAccess: new Set(request.allowedAccess ?? ["public", "staff", "emergency-only"]),
   };
 }
 
@@ -119,34 +111,16 @@ function dynamicEdgeCost(
 ): EdgeCost | undefined {
   if (isHardBlocked(graph, edge, context)) return undefined;
 
-  const congestionFrom = clamp(
-    context.request.zoneCongestion?.[edge.traversalFrom] ?? 0,
-    0,
-    1.5,
-  );
-  const congestionTo = clamp(
-    context.request.zoneCongestion?.[edge.traversalTo] ?? 0,
-    0,
-    1.5,
-  );
+  const congestionFrom = clamp(context.request.zoneCongestion?.[edge.traversalFrom] ?? 0, 0, 1.5);
+  const congestionTo = clamp(context.request.zoneCongestion?.[edge.traversalTo] ?? 0, 0, 1.5);
   const congestion = (congestionFrom + congestionTo) / 2;
-  const hazardFrom = clamp(
-    context.request.zoneHazards?.[edge.traversalFrom] ?? 0,
-    0,
-    100,
-  );
-  const hazardTo = clamp(
-    context.request.zoneHazards?.[edge.traversalTo] ?? 0,
-    0,
-    100,
-  );
+  const hazardFrom = clamp(context.request.zoneHazards?.[edge.traversalFrom] ?? 0, 0, 100);
+  const hazardTo = clamp(context.request.zoneHazards?.[edge.traversalTo] ?? 0, 0, 100);
   const hazard = (hazardFrom + hazardTo) / 200;
   const congestionPenaltySeconds =
     edge.baseTravelSeconds * congestion * edge.crowdSensitivity * 1.6;
-  const hazardPenaltySeconds =
-    edge.baseTravelSeconds * hazard * edge.hazardExposure * 1.8;
-  const travelSeconds =
-    edge.baseTravelSeconds + congestionPenaltySeconds + hazardPenaltySeconds;
+  const hazardPenaltySeconds = edge.baseTravelSeconds * hazard * edge.hazardExposure * 1.8;
+  const travelSeconds = edge.baseTravelSeconds + congestionPenaltySeconds + hazardPenaltySeconds;
 
   return {
     score: mode === "distance" ? edge.distanceMeters : travelSeconds,
@@ -173,9 +147,7 @@ function heuristic(
     fromZone.coordinates.y - toZone.coordinates.y,
   );
   const lowerBoundMeters = coordinateDistance * graph.minimumMetersPerCoordinateUnit();
-  return mode === "distance"
-    ? lowerBoundMeters
-    : lowerBoundMeters * graph.minimumSecondsPerMeter();
+  return mode === "distance" ? lowerBoundMeters : lowerBoundMeters * graph.minimumSecondsPerMeter();
 }
 
 function reconstructPath(
@@ -262,8 +234,7 @@ function findPath(
     const known = distance.get(current.zoneId);
     if (known === undefined) continue;
     const expectedPriority =
-      known +
-      heuristic(graph, current.zoneId, request.toZoneId, mode, algorithm);
+      known + heuristic(graph, current.zoneId, request.toZoneId, mode, algorithm);
     if (current.priority > expectedPriority + 1e-9) continue;
     if (current.zoneId === request.toZoneId) {
       return reconstructPath(graph, request, predecessors, context, known);
@@ -282,9 +253,7 @@ function findPath(
       sequence += 1;
       frontier.push({
         zoneId: edge.traversalTo,
-        priority:
-          tentative +
-          heuristic(graph, edge.traversalTo, request.toZoneId, mode, algorithm),
+        priority: tentative + heuristic(graph, edge.traversalTo, request.toZoneId, mode, algorithm),
         sequence,
       });
     }
@@ -339,7 +308,9 @@ function routeRationale(
     );
   }
   if (alternate) {
-    rationale.push("An alternate path remains available if conditions change on the primary route.");
+    rationale.push(
+      "An alternate path remains available if conditions change on the primary route.",
+    );
   }
   return rationale;
 }
@@ -348,10 +319,7 @@ function routeRationale(
  * Calculates the safest fast route, a distinct alternate, and the naive
  * shortest-distance comparator without using an LLM for any path decision.
  */
-export function calculateResponderRoutes(
-  graph: StadiumGraph,
-  request: RouteRequest,
-): RouteResult {
+export function calculateResponderRoutes(graph: StadiumGraph, request: RouteRequest): RouteResult {
   const context = createContext(request);
   const primary = findPath(graph, request, context, "dynamic").path;
   const naive = findPath(graph, request, context, "distance").path;
@@ -387,4 +355,3 @@ export function buildStadiumGraph(
 ): StadiumGraph {
   return new StadiumGraph(zones, edges);
 }
-

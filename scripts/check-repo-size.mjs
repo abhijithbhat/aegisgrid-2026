@@ -26,8 +26,12 @@ const sizeMiB = total / 1024 / 1024;
 console.log(`Repository payload: ${sizeMiB.toFixed(2)} MiB across ${paths.length} files.`);
 
 if (total >= LIMIT_BYTES) {
-  console.error(`Repository exceeds the 10 MiB submission limit by ${((total - LIMIT_BYTES) / 1024).toFixed(1)} KiB.`);
+  console.error(
+    `Repository exceeds the 10 MiB submission limit by ${((total - LIMIT_BYTES) / 1024).toFixed(1)} KiB.`,
+  );
   process.exit(1);
 }
 
-console.log(`PASS: ${(LIMIT_BYTES - total) / 1024 / 1024 >= 1 ? ((LIMIT_BYTES - total) / 1024 / 1024).toFixed(2) : ((LIMIT_BYTES - total) / 1024).toFixed(1)} ${LIMIT_BYTES - total >= 1024 * 1024 ? "MiB" : "KiB"} remaining.`);
+console.log(
+  `PASS: ${(LIMIT_BYTES - total) / 1024 / 1024 >= 1 ? ((LIMIT_BYTES - total) / 1024 / 1024).toFixed(2) : ((LIMIT_BYTES - total) / 1024).toFixed(1)} ${LIMIT_BYTES - total >= 1024 * 1024 ? "MiB" : "KiB"} remaining.`,
+);

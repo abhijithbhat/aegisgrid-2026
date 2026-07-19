@@ -1,0 +1,314 @@
+/* AegisGrid common operating picture: restrained operational semantics. */
+h1,
+h2,
+h3,
+.wordmark,
+.decision-incident h2,
+.scenario-stage-head h2 {
+  font-family: "Sora Variable", "IBM Plex Sans", sans-serif;
+}
+
+.mono,
+.event-clock strong,
+.kpi-value,
+.decision-metrics dd,
+.source-id,
+.weight,
+.version-text,
+.audit-table td:first-child,
+.map-status,
+.tiny-label,
+.pitch-label,
+.poi text,
+.gates text,
+.exits text,
+.map-incident-code,
+.eta-line {
+  font-family: "IBM Plex Mono", monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+body {
+  background: linear-gradient(180deg, #071318, #061116 72%, #040d11);
+}
+
+.aegis-app {
+  background-image:
+    linear-gradient(rgba(142, 207, 130, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(142, 207, 130, 0.018) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.panel,
+.kpi-card,
+.decision-brief,
+.signal-strip,
+.audit-kpis article,
+.audit-integrity-card,
+.simulation-monitor,
+.scenario-list button {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.panel:hover,
+.kpi-card:hover,
+.scenario-list button:hover {
+  transform: none;
+  box-shadow: var(--shadow);
+}
+
+.eyebrow,
+.wordmark span,
+.saved-analysis-label,
+.live-dot,
+.ai-health.available,
+.section-icon.cyan,
+.metric-icon.cyan {
+  color: var(--cyan);
+}
+
+.metric-icon.green,
+.section-icon.green,
+.assertion-ok {
+  color: var(--green);
+}
+
+.metric-icon.amber,
+.section-icon.amber,
+.decision-action-label {
+  color: var(--amber);
+}
+
+.topbar {
+  background: rgba(5, 16, 20, 0.96);
+  border-bottom: 1px solid var(--border);
+  box-shadow: none;
+  backdrop-filter: blur(14px);
+}
+
+.command-heading h1,
+.view-heading h1 {
+  font-family: "Sora Variable", "IBM Plex Sans", sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+
+.stadium-panel {
+  border-color: #3b5e62;
+  box-shadow:
+    0 0 0 1px rgba(85, 194, 195, 0.06),
+    0 24px 70px rgba(0, 0, 0, 0.26);
+}
+
+.stadium-canvas {
+  background:
+    radial-gradient(
+      ellipse at center,
+      transparent 0 31%,
+      rgba(85, 194, 195, 0.06) 31.3% 31.7%,
+      transparent 32% 43%,
+      rgba(85, 194, 195, 0.035) 43.3% 43.6%,
+      transparent 44%
+    ),
+    #071a20;
+}
+
+.stadium-canvas::before {
+  background-image:
+    linear-gradient(rgba(85, 194, 195, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(85, 194, 195, 0.09) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: radial-gradient(ellipse at center, black 0 58%, transparent 88%);
+}
+
+.active-route {
+  stroke: var(--cyan);
+  filter: drop-shadow(0 0 3px rgba(85, 194, 195, 0.7));
+  animation: route-scan 1.8s linear infinite;
+}
+
+.incident-marker circle {
+  fill: #3b1b1b;
+  stroke: var(--red);
+  animation: critical-arrival 1.5s ease-out 1;
+}
+
+@keyframes route-scan {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+@keyframes critical-arrival {
+  0% {
+    stroke-width: 12;
+    opacity: 0.35;
+  }
+  100% {
+    stroke-width: 2;
+    opacity: 1;
+  }
+}
+
+.essentiality-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--cyan);
+  background: #0b1d23;
+}
+
+.essentiality-control > div {
+  display: grid;
+  gap: 2px;
+}
+.essentiality-control strong {
+  font-size: 12px;
+}
+.essentiality-control span {
+  color: var(--muted);
+  font-size: 10px;
+}
+.essentiality-control button {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: 10px;
+  font-weight: 600;
+}
+.essentiality-control button > span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.essentiality-control button[aria-checked="true"] > span {
+  background: var(--green);
+}
+
+.path-comparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.path-comparison article {
+  padding: 16px;
+  border: 1px solid var(--border);
+  background: #0b1d23;
+}
+.path-comparison article.ai-path {
+  border-top-color: var(--cyan);
+}
+.path-comparison article > span {
+  color: var(--muted);
+  font:
+    500 9px "IBM Plex Mono",
+    monospace;
+  letter-spacing: 0.12em;
+}
+.path-comparison h3 {
+  margin: 7px 0;
+  font-size: 14px;
+}
+.path-comparison p,
+.path-comparison li {
+  color: var(--text-soft);
+  font-size: 11px;
+}
+.path-comparison ul {
+  margin: 10px 0 0;
+  padding-left: 17px;
+}
+
+.reasoning-stream {
+  display: grid;
+  gap: 1px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--border);
+  background: var(--border);
+}
+
+.reasoning-stream li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  background: #0b1d23;
+  animation: reasoning-reveal 0.24s ease-out both;
+}
+.reasoning-stream svg {
+  margin-top: 2px;
+  color: var(--green);
+}
+.reasoning-stream span {
+  display: grid;
+}
+.reasoning-stream strong {
+  font-size: 10px;
+}
+.reasoning-stream small {
+  color: var(--muted);
+  font-size: 9px;
+}
+@keyframes reasoning-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+}
+
+@media (max-width: 700px) {
+  .essentiality-control {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .path-comparison {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media print {
+  .sidebar,
+  .topbar,
+  .global-footer,
+  .decision-footer,
+  button {
+    display: none !important;
+  }
+  .app-shell {
+    padding: 0;
+  }
+  body {
+    background: white;
+    color: #12202b;
+  }
+  .panel {
+    box-shadow: none;
+    border-color: #aab7c0;
+  }
+}

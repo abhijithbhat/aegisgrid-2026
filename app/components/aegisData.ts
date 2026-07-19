@@ -1,11 +1,7 @@
 export type Severity = "critical" | "high" | "moderate" | "low";
 
 export type IncidentStatus =
-  | "Awaiting approval"
-  | "Plan approved"
-  | "Monitoring"
-  | "Resolved"
-  | "Dismissed";
+  "Awaiting approval" | "Plan approved" | "Monitoring" | "Resolved" | "Dismissed";
 
 export type Incident = {
   id: string;
@@ -268,22 +264,60 @@ export const INITIAL_INCIDENTS: Incident[] = [
     rationale:
       "Independent visual reports justify rapid inspection, while normal particulate readings and a credible production note lower confidence that combustion is present.",
     evidence: [
-      { source: "GUEST-401", fact: "Visible grey haze near east kiosk 12.", weight: "0.74", kind: "Guest text" },
-      { source: "STAFF-196", fact: "Usher reports a smoke smell at E-2.", weight: "0.88", kind: "Staff radio" },
-      { source: "AQ-E2", fact: "PM2.5 and CO remain inside event baseline.", weight: "0.93", kind: "Telemetry" },
+      {
+        source: "GUEST-401",
+        fact: "Visible grey haze near east kiosk 12.",
+        weight: "0.74",
+        kind: "Guest text",
+      },
+      {
+        source: "STAFF-196",
+        fact: "Usher reports a smoke smell at E-2.",
+        weight: "0.88",
+        kind: "Staff radio",
+      },
+      {
+        source: "AQ-E2",
+        fact: "PM2.5 and CO remain inside event baseline.",
+        weight: "0.93",
+        kind: "Telemetry",
+      },
     ],
     contradictoryEvidence: [
-      { sources: "GUEST-401 ↔ PROD-22", description: "Smoke reported; production runner says theatrical haze.", impact: "Source must be visually verified." },
-      { sources: "STAFF-196 ↔ AQ-E2", description: "Odour reported while particulate and CO sensors remain normal.", impact: "Sensor cannot rule out an early or localized event." },
+      {
+        sources: "GUEST-401 ↔ PROD-22",
+        description: "Smoke reported; production runner says theatrical haze.",
+        impact: "Source must be visually verified.",
+      },
+      {
+        sources: "STAFF-196 ↔ AQ-E2",
+        description: "Odour reported while particulate and CO sensors remain normal.",
+        impact: "Sensor cannot rule out an early or localized event.",
+      },
     ],
     missing: ["Thermal reading at kiosk 12", "Production haze release log"],
     questions: ["Can Fire Safety 1 confirm heat, flame, or a combustion odour?"],
     affectedZones: ["East Concourse E-2", "Kiosk 12"],
     equipment: ["Thermal camera", "Radio", "Portable air monitor"],
     actions: [
-      { text: "Verify kiosk 12 with thermal camera", owner: "Fire Safety 1", target: "3 min", approval: true },
-      { text: "Hold nonessential haze effects", owner: "Production control", target: "Now", approval: true },
-      { text: "Keep E-2 egress path unobstructed", owner: "Steward E-2", target: "Now", approval: false },
+      {
+        text: "Verify kiosk 12 with thermal camera",
+        owner: "Fire Safety 1",
+        target: "3 min",
+        approval: true,
+      },
+      {
+        text: "Hold nonessential haze effects",
+        owner: "Production control",
+        target: "Now",
+        approval: true,
+      },
+      {
+        text: "Keep E-2 egress path unobstructed",
+        owner: "Steward E-2",
+        target: "Now",
+        approval: false,
+      },
     ],
     route: {
       from: "Security Control",
@@ -293,7 +327,8 @@ export const INITIAL_INCIDENTS: Incident[] = [
       alternateEta: "3m 48s",
       avoided: ["Food Court queue"],
       saved: "0m 42s",
-      rationale: "Inner concourse C-3 has lower density and direct access to the affected kiosk face.",
+      rationale:
+        "Inner concourse C-3 has lower density and direct access to the affected kiosk face.",
     },
     announcement: {
       language: "English",
@@ -320,11 +355,23 @@ export const INITIAL_INCIDENTS: Incident[] = [
     risk: 58,
     riskInputs: { hazardSeverity: 45, vulnerablePerson: true },
     aiSeverity: "Moderate",
-    summary: "The AC-2 powered door is intermittent. A step-free alternate is open, but the fault would constrain egress if conditions change.",
-    rationale: "Door telemetry and a steward report agree; low current occupancy limits immediate risk, but step-free route resilience is reduced.",
+    summary:
+      "The AC-2 powered door is intermittent. A step-free alternate is open, but the fault would constrain egress if conditions change.",
+    rationale:
+      "Door telemetry and a steward report agree; low current occupancy limits immediate risk, but step-free route resilience is reduced.",
     evidence: [
-      { source: "DOOR-AC2", fact: "Three incomplete open cycles in five minutes.", weight: "0.98", kind: "Telemetry" },
-      { source: "STAFF-170", fact: "Door requires manual assistance.", weight: "0.92", kind: "Staff radio" },
+      {
+        source: "DOOR-AC2",
+        fact: "Three incomplete open cycles in five minutes.",
+        weight: "0.98",
+        kind: "Telemetry",
+      },
+      {
+        source: "STAFF-170",
+        fact: "Door requires manual assistance.",
+        weight: "0.92",
+        kind: "Staff radio",
+      },
     ],
     contradictoryEvidence: [],
     missing: ["Repair time estimate"],
@@ -332,8 +379,18 @@ export const INITIAL_INCIDENTS: Incident[] = [
     affectedZones: ["Accessible Corridor AC-2", "South-east landing"],
     equipment: ["Door override key", "Portable wayfinding sign"],
     actions: [
-      { text: "Station accessibility rover at AC-2", owner: "Accessibility lead", target: "4 min", approval: true },
-      { text: "Post step-free diversion signage", owner: "Steward AC-1", target: "3 min", approval: true },
+      {
+        text: "Station accessibility rover at AC-2",
+        owner: "Accessibility lead",
+        target: "4 min",
+        approval: true,
+      },
+      {
+        text: "Post step-free diversion signage",
+        owner: "Steward AC-1",
+        target: "3 min",
+        approval: true,
+      },
     ],
     route: {
       from: "Accessibility Point A-1",
@@ -370,11 +427,23 @@ export const INITIAL_INCIDENTS: Incident[] = [
     risk: 51,
     riskInputs: { hazardSeverity: 55, vulnerablePerson: false },
     aiSeverity: "Moderate",
-    summary: "Two ticketing queues are crossing at North Gate N-1. Throughput is stable but the crossover reduces emergency-lane width.",
-    rationale: "Queue geometry is verified and the emergency lane is partially constrained, though overall density remains below intervention threshold.",
+    summary:
+      "Two ticketing queues are crossing at North Gate N-1. Throughput is stable but the crossover reduces emergency-lane width.",
+    rationale:
+      "Queue geometry is verified and the emergency lane is partially constrained, though overall density remains below intervention threshold.",
     evidence: [
-      { source: "STAFF-155", fact: "Queues A and B intersect beside barrier N-14.", weight: "0.91", kind: "Staff radio" },
-      { source: "FLOW-N1", fact: "Gate throughput remains 46 entries/min.", weight: "0.95", kind: "Telemetry" },
+      {
+        source: "STAFF-155",
+        fact: "Queues A and B intersect beside barrier N-14.",
+        weight: "0.91",
+        kind: "Staff radio",
+      },
+      {
+        source: "FLOW-N1",
+        fact: "Gate throughput remains 46 entries/min.",
+        weight: "0.95",
+        kind: "Telemetry",
+      },
     ],
     contradictoryEvidence: [],
     missing: ["Current emergency lane width"],
@@ -382,7 +451,12 @@ export const INITIAL_INCIDENTS: Incident[] = [
     affectedZones: ["North Gate N-1"],
     equipment: ["Retractable barriers", "Direction paddles"],
     actions: [
-      { text: "Separate queues with barrier N-14", owner: "Crowd Team North", target: "2 min", approval: false },
+      {
+        text: "Separate queues with barrier N-14",
+        owner: "Crowd Team North",
+        target: "2 min",
+        approval: false,
+      },
     ],
     route: {
       from: "North Steward Post",
@@ -419,20 +493,36 @@ export const INITIAL_INCIDENTS: Incident[] = [
     risk: 34,
     riskInputs: { hazardSeverity: 35, vulnerablePerson: false },
     aiSeverity: "Low",
-    summary: "A brief motor-temperature spike has cleared. Facilities is checking lift L-4 before it returns to service.",
-    rationale: "The alert was isolated, current readings are normal, and a parallel service route remains available.",
+    summary:
+      "A brief motor-temperature spike has cleared. Facilities is checking lift L-4 before it returns to service.",
+    rationale:
+      "The alert was isolated, current readings are normal, and a parallel service route remains available.",
     evidence: [
-      { source: "LIFT-L4", fact: "Motor reached 78°C for 42 seconds and returned to baseline.", weight: "0.94", kind: "Telemetry" },
+      {
+        source: "LIFT-L4",
+        fact: "Motor reached 78°C for 42 seconds and returned to baseline.",
+        weight: "0.94",
+        kind: "Telemetry",
+      },
     ],
     contradictoryEvidence: [
-      { sources: "LIFT-L4 ↔ MAINT-08", description: "Sensor shows a spike; remote panel recorded no fault code.", impact: "Inspect locally before return to service." },
+      {
+        sources: "LIFT-L4 ↔ MAINT-08",
+        description: "Sensor shows a spike; remote panel recorded no fault code.",
+        impact: "Inspect locally before return to service.",
+      },
     ],
     missing: ["Physical inspection result"],
     questions: ["Is there any odour or abnormal vibration at L-4?"],
     affectedZones: ["Service Lift L-4"],
     equipment: ["Thermal probe", "Lockout tag"],
     actions: [
-      { text: "Inspect and hold lift L-4 out of service", owner: "Facilities 2", target: "6 min", approval: true },
+      {
+        text: "Inspect and hold lift L-4 out of service",
+        owner: "Facilities 2",
+        target: "6 min",
+        approval: true,
+      },
     ],
     route: {
       from: "Facilities Workshop",
@@ -444,7 +534,11 @@ export const INITIAL_INCIDENTS: Incident[] = [
       saved: "0m 48s",
       rationale: "Service S-5 avoids public traffic and supports equipment access.",
     },
-    announcement: { language: "Not required", tone: "Internal", text: "No public announcement recommended at current risk level." },
+    announcement: {
+      language: "Not required",
+      tone: "Internal",
+      text: "No public announcement recommended at current risk level.",
+    },
     uncertainty: "Cause of the short temperature excursion is unknown.",
   },
 ];
@@ -503,7 +597,8 @@ export const SCENARIOS = [
     name: "West Gate Surge",
     category: "Crowd dynamics",
     duration: "04:30",
-    description: "Occupancy rises quickly, inflow exceeds outflow, and one density sensor degrades.",
+    description:
+      "Occupancy rises quickly, inflow exceeds outflow, and one density sensor degrades.",
     impact: "+14% west occupancy",
     incidentId: "INC-2040",
     events: [
@@ -520,7 +615,8 @@ export const SCENARIOS = [
     name: "Conflicting Smoke Reports",
     category: "Evidence conflict",
     duration: "03:45",
-    description: "Smoke, theatrical fog, and normal air-quality signals arrive from independent sources.",
+    description:
+      "Smoke, theatrical fog, and normal air-quality signals arrive from independent sources.",
     impact: "+2 contradictions",
     incidentId: "INC-2045",
     events: [
@@ -537,7 +633,8 @@ export const SCENARIOS = [
     name: "Multilingual Medical Incident",
     category: "Semantic fusion",
     duration: "03:10",
-    description: "English and Hindi reports use different scripts and location wording for one unconscious guest.",
+    description:
+      "English and Hindi reports use different scripts and location wording for one unconscious guest.",
     impact: "+3 fused reports",
     incidentId: "INC-2047",
     events: [
@@ -554,7 +651,8 @@ export const SCENARIOS = [
     name: "Accessible Corridor Blockage",
     category: "Inclusive routing",
     duration: "05:15",
-    description: "A step-free corridor becomes unavailable during egress; stairs and blocked edges are excluded.",
+    description:
+      "A step-free corridor becomes unavailable during egress; stairs and blocked edges are excluded.",
     impact: "Route AC-2B active",
     incidentId: "INC-2043",
     events: [
@@ -571,7 +669,8 @@ export const SCENARIOS = [
     name: "False Duplicate Challenge",
     category: "Fusion precision",
     duration: "04:05",
-    description: "Two nearby, similarly timed incidents must remain distinct despite lexical similarity.",
+    description:
+      "Two nearby, similarly timed incidents must remain distinct despite lexical similarity.",
     impact: "2 incidents preserved",
     incidentId: "INC-2038",
     events: [
@@ -604,4 +703,12 @@ export const SAMPLE_ROWS = [
   ["2026-07-10T19:43:00Z", "ACCESS_02", "273", "700", "9", "12", "degraded"],
 ];
 
-export const SAMPLE_HEADERS = ["recorded_at", "area_code", "people_now", "max_safe", "entries_pm", "exits_pm", "device_state"];
+export const SAMPLE_HEADERS = [
+  "recorded_at",
+  "area_code",
+  "people_now",
+  "max_safe",
+  "entries_pm",
+  "exits_pm",
+  "device_state",
+];

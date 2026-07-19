@@ -25,7 +25,14 @@ export interface OperationalRepository {
   upsertIncident(record: IncidentRecord): Promise<void>;
   appendAuditEvent(event: PersistedAuditEvent): Promise<void>;
   listAuditEvents(incidentId?: string): Promise<PersistedAuditEvent[]>;
-  subscribe?(listener: (update: { type: "incident"; record: IncidentRecord } | { type: "audit"; event: PersistedAuditEvent }) => void, onError: () => void): () => void;
+  subscribe?(
+    listener: (
+      update:
+        | { type: "incident"; record: IncidentRecord }
+        | { type: "audit"; event: PersistedAuditEvent },
+    ) => void,
+    onError: () => void,
+  ): () => void;
 }
 
 const memoryIncidents = new Map<string, IncidentRecord>();
@@ -67,11 +74,17 @@ export function withRepositoryFallback(
   fallback: OperationalRepository = memoryRepository,
 ): OperationalRepository {
   let degraded = false;
-  const enterFallback = () => { degraded = true; };
+  const enterFallback = () => {
+    degraded = true;
+  };
 
   return {
-    get mode() { return degraded ? fallback.mode : primary.mode; },
-    get durable() { return degraded ? fallback.durable : primary.durable; },
+    get mode() {
+      return degraded ? fallback.mode : primary.mode;
+    },
+    get durable() {
+      return degraded ? fallback.durable : primary.durable;
+    },
     async upsertIncident(record) {
       if (degraded) return fallback.upsertIncident(record);
       try {
@@ -112,11 +125,10 @@ export function withRepositoryFallback(
 let firestoreRepository: Promise<OperationalRepository> | undefined;
 
 async function createFirestoreRepository(): Promise<OperationalRepository> {
-  const [{ getApps, initializeApp, applicationDefault }, { getFirestore }] =
-    await Promise.all([
-      import("firebase-admin/app"),
-      import("firebase-admin/firestore"),
-    ]);
+  const [{ getApps, initializeApp, applicationDefault }, { getFirestore }] = await Promise.all([
+    import("firebase-admin/app"),
+    import("firebase-admin/firestore"),
+  ]);
 
   const projectId = process.env.FIREBASE_PROJECT_ID;
   const app =
@@ -146,15 +158,24 @@ async function createFirestoreRepository(): Promise<OperationalRepository> {
     subscribe(listener, onError) {
       const unsubscribeIncidents = database.collection("incidents").onSnapshot((snapshot) => {
         for (const change of snapshot.docChanges()) {
-          if (change.type !== "removed") listener({ type: "incident", record: change.doc.data() as IncidentRecord });
+          if (change.type !== "removed")
+            listener({ type: "incident", record: change.doc.data() as IncidentRecord });
         }
       }, onError);
-      const unsubscribeAudit = database.collection("auditEvents").orderBy("timestamp", "desc").limit(200).onSnapshot((snapshot) => {
-        for (const change of snapshot.docChanges()) {
-          if (change.type === "added") listener({ type: "audit", event: change.doc.data() as PersistedAuditEvent });
-        }
-      }, onError);
-      return () => { unsubscribeIncidents(); unsubscribeAudit(); };
+      const unsubscribeAudit = database
+        .collection("auditEvents")
+        .orderBy("timestamp", "desc")
+        .limit(200)
+        .onSnapshot((snapshot) => {
+          for (const change of snapshot.docChanges()) {
+            if (change.type === "added")
+              listener({ type: "audit", event: change.doc.data() as PersistedAuditEvent });
+          }
+        }, onError);
+      return () => {
+        unsubscribeIncidents();
+        unsubscribeAudit();
+      };
     },
   });
 }

@@ -47,4 +47,3 @@ export function safeOperationalError(
 ): StructuredError {
   return { code, message: sanitizePlainText(message, 300), retryable };
 }
-

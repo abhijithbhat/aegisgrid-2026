@@ -12,14 +12,50 @@ import { getOperationalRepository } from "../../../src/lib/firestore/repository"
 
 export const runtime = "nodejs";
 
-const auditInputSchema = z.object({
-  action: z.enum(["recommendation-approved", "recommendation-modified", "recommendation-dismissed", "team-assigned", "step-completed", "report-dismissed", "note-added", "incident-resolved"]),
-  incidentId: z.string().trim().min(1).max(80).regex(/^[a-zA-Z0-9_-]+$/),
-  previousStatus: z.enum(["new", "assessing", "awaiting-approval", "approved", "responding", "monitoring", "resolved", "dismissed", "unchanged"]),
-  newStatus: z.enum(["new", "assessing", "awaiting-approval", "approved", "responding", "monitoring", "resolved", "dismissed", "unchanged"]),
-  note: z.string().trim().max(1_000).default(""),
-  aiRecommendationVersion: z.literal("aegis-ai-contract-1.0.0"),
-}).strict();
+const auditInputSchema = z
+  .object({
+    action: z.enum([
+      "recommendation-approved",
+      "recommendation-modified",
+      "recommendation-dismissed",
+      "team-assigned",
+      "step-completed",
+      "report-dismissed",
+      "note-added",
+      "incident-resolved",
+    ]),
+    incidentId: z
+      .string()
+      .trim()
+      .min(1)
+      .max(80)
+      .regex(/^[a-zA-Z0-9_-]+$/),
+    previousStatus: z.enum([
+      "new",
+      "assessing",
+      "awaiting-approval",
+      "approved",
+      "responding",
+      "monitoring",
+      "resolved",
+      "dismissed",
+      "unchanged",
+    ]),
+    newStatus: z.enum([
+      "new",
+      "assessing",
+      "awaiting-approval",
+      "approved",
+      "responding",
+      "monitoring",
+      "resolved",
+      "dismissed",
+      "unchanged",
+    ]),
+    note: z.string().trim().max(1_000).default(""),
+    aiRecommendationVersion: z.literal("aegis-ai-contract-1.0.0"),
+  })
+  .strict();
 
 export async function GET(request: Request): Promise<Response> {
   const id = requestId(request);
@@ -34,9 +70,18 @@ export async function GET(request: Request): Promise<Response> {
   try {
     const repository = await getOperationalRepository();
     const events = await repository.listAuditEvents(incidentId);
-    return jsonResponse({ ok: true, events, persistence: { mode: repository.mode, durable: repository.durable } }, 200, id);
+    return jsonResponse(
+      { ok: true, events, persistence: { mode: repository.mode, durable: repository.durable } },
+      200,
+      id,
+    );
   } catch {
-    return publicError(id, 503, "AUDIT_READ_UNAVAILABLE", "The audit log is temporarily unavailable.");
+    return publicError(
+      id,
+      503,
+      "AUDIT_READ_UNAVAILABLE",
+      "The audit log is temporarily unavailable.",
+    );
   }
 }
 
@@ -59,13 +104,22 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     await repository.appendAuditEvent(event);
-    return jsonResponse({
-      ok: true,
-      event,
-      persistence: { mode: repository.mode, durable: repository.durable },
-      dispatchPerformed: false,
-    }, 201, id);
+    return jsonResponse(
+      {
+        ok: true,
+        event,
+        persistence: { mode: repository.mode, durable: repository.durable },
+        dispatchPerformed: false,
+      },
+      201,
+      id,
+    );
   } catch {
-    return publicError(id, 503, "AUDIT_WRITE_UNAVAILABLE", "The audit event could not be recorded. No operational action was dispatched.");
+    return publicError(
+      id,
+      503,
+      "AUDIT_WRITE_UNAVAILABLE",
+      "The audit event could not be recorded. No operational action was dispatched.",
+    );
   }
 }

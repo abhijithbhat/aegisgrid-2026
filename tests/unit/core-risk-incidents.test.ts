@@ -39,9 +39,7 @@ describe("transparent risk engine", () => {
 describe("binary heap and incident priority queue", () => {
   it("orders generic values in O(log n) heap operations", () => {
     const heap = new BinaryHeap<number>((a, b) => a - b, [8, 3, 5, 1, 9]);
-    expect([heap.pop(), heap.pop(), heap.pop(), heap.pop(), heap.pop()]).toEqual([
-      1, 3, 5, 8, 9,
-    ]);
+    expect([heap.pop(), heap.pop(), heap.pop(), heap.pop(), heap.pop()]).toEqual([1, 3, 5, 8, 9]);
   });
 
   it("removes the highest operational-priority incident first", () => {
@@ -125,16 +123,20 @@ describe("duplicate blocking and semantic fusion", () => {
     const candidates = generateDuplicateCandidates(reports, [edge]);
     expect(candidates.some((item) => item.pairKey === "r1::r2")).toBe(true);
 
-    const fused = fuseIncidentReports(reports, [edge], [
-      {
-        reportAId: "r1",
-        reportBId: "r2",
-        sameIncident: true,
-        confidence: 0.94,
-        explanation: "Same event",
-        contradictions: [],
-      },
-    ]);
+    const fused = fuseIncidentReports(
+      reports,
+      [edge],
+      [
+        {
+          reportAId: "r1",
+          reportBId: "r2",
+          sameIncident: true,
+          confidence: 0.94,
+          explanation: "Same event",
+          contradictions: [],
+        },
+      ],
+    );
     expect(fused.clusters.find((cluster) => cluster.reportIds.includes("r1"))?.reportIds).toEqual([
       "r1",
       "r2",
@@ -142,4 +144,3 @@ describe("duplicate blocking and semantic fusion", () => {
     expect(fused.clusters.flatMap((cluster) => cluster.reports)).toHaveLength(3);
   });
 });
-

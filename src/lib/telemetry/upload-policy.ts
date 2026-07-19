@@ -12,8 +12,7 @@ export interface UploadDescriptor {
 }
 
 export type UploadPolicyResult =
-  | { valid: true; kind: SupportedUploadKind }
-  | { valid: false; issues: ImportIssue[] };
+  { valid: true; kind: SupportedUploadKind } | { valid: false; issues: ImportIssue[] };
 
 const POLICIES: Record<SupportedUploadKind, { extensions: string[]; mimeTypes: string[] }> = {
   csv: {

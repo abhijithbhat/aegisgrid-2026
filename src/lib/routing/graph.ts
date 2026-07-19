@@ -106,4 +106,3 @@ export class StadiumGraph {
     return Number.isFinite(minimum) ? minimum : 0;
   }
 }
-

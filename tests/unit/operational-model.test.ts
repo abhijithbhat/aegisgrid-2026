@@ -15,22 +15,26 @@ const recommendation: AIRecommendation = {
   incidentType: "medical",
   severity: "high",
   confidence: 0.91,
-  evidence: [{
-    sourceId: INITIAL_INCIDENTS[0].evidence[0].source,
-    fact: INITIAL_INCIDENTS[0].evidence[0].fact,
-    weight: 0.95,
-  }],
+  evidence: [
+    {
+      sourceId: INITIAL_INCIDENTS[0].evidence[0].source,
+      fact: INITIAL_INCIDENTS[0].evidence[0].fact,
+      weight: 0.95,
+    },
+  ],
   contradictions: [],
   missingInformation: ["Breathing status is unconfirmed."],
   clarifyingQuestions: ["Is the guest breathing?"],
-  recommendedActions: [{
-    priority: 1,
-    action: "Confirm breathing status.",
-    ownerRole: "Medical Alpha",
-    targetMinutes: 1,
-    justification: "This is required for safe triage.",
-    requiresApproval: true,
-  }],
+  recommendedActions: [
+    {
+      priority: 1,
+      action: "Confirm breathing status.",
+      ownerRole: "Medical Alpha",
+      targetMinutes: 1,
+      justification: "This is required for safe triage.",
+      requiresApproval: true,
+    },
+  ],
   recommendedTeamType: "medical",
   equipment: ["AED"],
   announcement: {

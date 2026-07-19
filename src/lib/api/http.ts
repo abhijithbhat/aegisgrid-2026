@@ -71,7 +71,9 @@ export function rejectCrossOriginRequest(request: Request, id: string): Response
 
     const forwardedHost = request.headers.get("x-forwarded-host") || request.headers.get("host");
     if (forwardedHost) {
-      const forwardedProto = request.headers.get("x-forwarded-proto") || (requestUrl.protocol === "https:" ? "https" : "http");
+      const forwardedProto =
+        request.headers.get("x-forwarded-proto") ||
+        (requestUrl.protocol === "https:" ? "https" : "http");
       const forwardedOriginUrl = new URL(`${forwardedProto}://${forwardedHost}`);
       if (originUrl.origin === forwardedOriginUrl.origin) return null;
     }
@@ -95,7 +97,12 @@ export async function parseJson<TSchema extends z.ZodType>(
   try {
     const text = await request.text();
     if (new TextEncoder().encode(text).byteLength > MAX_JSON_BYTES) {
-      return publicError(id, 413, "PAYLOAD_TOO_LARGE", "The request exceeds the 256 KiB JSON limit.");
+      return publicError(
+        id,
+        413,
+        "PAYLOAD_TOO_LARGE",
+        "The request exceeds the 256 KiB JSON limit.",
+      );
     }
     raw = JSON.parse(text);
   } catch {
@@ -153,11 +160,13 @@ export function structuredLog(entry: {
   code?: string;
 }): void {
   // Intentionally excludes request bodies, provider payloads, and secrets.
-  console.info(JSON.stringify({
-    severity: entry.outcome === "error" ? "ERROR" : "INFO",
-    timestamp: new Date().toISOString(),
-    ...entry,
-  }));
+  console.info(
+    JSON.stringify({
+      severity: entry.outcome === "error" ? "ERROR" : "INFO",
+      timestamp: new Date().toISOString(),
+      ...entry,
+    }),
+  );
 }
 
 export function isResponse(value: unknown): value is Response {
